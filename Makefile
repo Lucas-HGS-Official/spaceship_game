@@ -1,4 +1,4 @@
-TARGET = code/bin/game
+TARGET = bin/game
 SRC = $(wildcard code/src/*.c)
 OBJ = $(patsubst code/src/%.c, code/obj/%.o, $(SRC))
 
@@ -12,7 +12,7 @@ code/obj/%.o : code/src/%.c
 
 clean:
 	rm -f code/obj/*.o
-	rm -f code/bin/*
+	rm -f $(TARGET)
 
 run:
 	./$(TARGET)
