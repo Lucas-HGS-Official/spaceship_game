@@ -11,7 +11,7 @@ typedef struct Entity {
 
 void setup();
 void game_loop(entity_t* entities);
-void destroy_game();
+void destroy_game(entity_t* entities);
 
 int main(int argc, char const *argv[]) {
 
@@ -19,33 +19,61 @@ int main(int argc, char const *argv[]) {
 
     entity_t entities[MAX_NUM_ENTITIES];
     
+    int i = 0;
 
+    // Player
     entity_t player = {
         .texture = LoadTexture("resources/images/player.png"),
         .src_rect = { 0, 0, player.texture.width, player.texture.height },
-        .dest_rect = { 100, 150, player.texture.width, player.texture.height },
-        .origin = { 0, 0 },
+        .dest_rect = { WINDOW_WIDTH/2, WINDOW_HEIGHT/2, player.texture.width, player.texture.height },
+        .origin = { player.texture.width/2, player.texture.height/2 },
     };
-    entities[0] = player;
+    entities[i] = player; i++;
 
+    // Stars
     Texture2D star_texture = LoadTexture("resources/images/star.png");
-    for (int i = 1; i < MAX_NUM_ENTITIES; i++) {
+    for (; i < 21;) {
         entity_t star = {
             .texture = star_texture,
             .src_rect = { .width = star.texture.width, .height = star.texture.height },
             .dest_rect = {
                 .width = star.texture.width, .height = star.texture.height,
                 .x = GetRandomValue(star.texture.width, WINDOW_WIDTH - star.texture.width),
-                .y = GetRandomValue(star.texture.height, WINDOW_HEIGHT - star.texture.height)
-            }
+                .y = GetRandomValue(star.texture.height, WINDOW_HEIGHT - star.texture.height),
+            },
+            .origin = { 0, 0 },
         };
+        entities[i] = star; i++;
+    };
 
-        entities[i] = star;
-    }
+    // Meteor
+    entity_t meteor = {
+        .texture = LoadTexture("resources/images/meteor.png"),
+        .src_rect = { .width = meteor.texture.width, .height = meteor.texture.height },
+        .dest_rect = {
+            .width = meteor.texture.width, .height = meteor.texture.height,
+            .x = WINDOW_WIDTH/2,
+            .y = WINDOW_HEIGHT/2,
+        },
+        .origin = { .x = meteor.texture.width/2, .y = meteor.texture.height },
+    };
+    entities[i] = meteor; i++;
+
+    // Laser
+    entity_t laser = {
+        .texture = LoadTexture("resources/images/laser.png"),
+        .src_rect = { .width = laser.texture.width, .height = laser.texture.height },
+        .dest_rect = {
+            .width = laser.texture.width, .height = laser.texture.height,
+            .x = laser.texture.width + 25,
+            .y = WINDOW_HEIGHT - (laser.texture.height + 25),
+        },
+    };
+    entities[i] = laser; i++;
 
 
     game_loop(entities);
-    destroy_game();
+    destroy_game(entities);
 
     return 0;
 }
@@ -71,8 +99,6 @@ void game_loop(entity_t* entities) {
         // Update
         //----------------------------------------------------------------------------------
         // TODO: Update your variables here
-
-        entities[0].dest_rect.x += 0.1;
         //----------------------------------------------------------------------------------
 
         // Draw
@@ -92,9 +118,13 @@ void game_loop(entity_t* entities) {
 
 }
 
-void destroy_game() {
+void destroy_game(entity_t* entities) {
     // De-Initialization
     //--------------------------------------------------------------------------------------
+    for (int i = 0; i < MAX_NUM_ENTITIES; i++) {
+        UnloadTexture(entities[i].texture);
+    }
+
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
