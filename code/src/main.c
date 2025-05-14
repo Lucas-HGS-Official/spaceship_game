@@ -21,15 +21,6 @@ int main(int argc, char const *argv[]) {
     
     int i = 0;
 
-    // Player
-    entity_t player = {
-        .texture = LoadTexture("resources/images/player.png"),
-        .src_rect = { 0, 0, player.texture.width, player.texture.height },
-        .dest_rect = { WINDOW_WIDTH/2, WINDOW_HEIGHT/2, player.texture.width, player.texture.height },
-        .origin = { player.texture.width/2, player.texture.height/2 },
-    };
-    entities[i] = player; i++;
-
     // Stars
     Texture2D star_texture = LoadTexture("resources/images/star.png");
     for (; i < 21;) {
@@ -71,6 +62,15 @@ int main(int argc, char const *argv[]) {
     };
     entities[i] = laser; i++;
 
+    // Player
+    entity_t player = {
+        .texture = LoadTexture("resources/images/player.png"),
+        .src_rect = { 0, 0, player.texture.width, player.texture.height },
+        .dest_rect = { WINDOW_WIDTH/2, WINDOW_HEIGHT/2, player.texture.width, player.texture.height },
+        .origin = { player.texture.width/2, player.texture.height/2 },
+    };
+    entities[i] = player; i++;
+
 
     game_loop(entities);
     destroy_game(entities);
@@ -94,6 +94,11 @@ void setup(){
 }
 
 void game_loop(entity_t* entities) {
+    Vector2 player_direction = { .x = 2, .y = -1 };
+    player_direction = Vector2Normalize(player_direction);
+    float player_speed = 100.f;
+    Vector2 player_movement = Vector2Scale(player_direction, player_speed);
+
     // Main game loop
     while (!WindowShouldClose()) {  // Detect window close button or ESC key
         // Update
@@ -102,9 +107,8 @@ void game_loop(entity_t* entities) {
         //----------------------------------------------------------------------------------
         float delta_time = GetFrameTime();
 
-        Vector2 player_direction = { .x = 200, .y = -100 };
-        entities[0].dest_rect.x += player_direction.x * delta_time;
-        entities[0].dest_rect.y += player_direction.y * delta_time;
+        entities[23].dest_rect.x += player_movement.x * delta_time;
+        entities[23].dest_rect.y += player_movement.y * delta_time;
 
         // Draw
         //----------------------------------------------------------------------------------
