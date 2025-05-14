@@ -102,6 +102,10 @@ void game_loop(entity_t* entities) {
         //----------------------------------------------------------------------------------
         float delta_time = GetFrameTime();
 
+        Vector2 player_direction = { .x = 200, .y = -100 };
+        entities[0].dest_rect.x += player_direction.x * delta_time;
+        entities[0].dest_rect.y += player_direction.y * delta_time;
+
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
