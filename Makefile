@@ -4,6 +4,10 @@ OBJ = $(patsubst code/src/%.c, code/obj/%.o, $(SRC))
 LIB_SRC = $(wildcard code/libs/src/*.c)
 LIB_OBJ = $(patsubst code/libs/src/%.c, code/libs/obj/%.o, $(LIB_SRC))
 
+default: from_scratch
+
+from_scratch: lib_build clean build
+
 build: lib_copy $(TARGET)
 
 $(TARGET): $(OBJ)
@@ -17,7 +21,7 @@ clean:
 	rm -f $(TARGET)
 
 
-lib_build: $(LIB_OBJ)
+lib_build: lib_clean $(LIB_OBJ)
 
 code/libs/obj/%.o : code/libs/src/%.c
 	gcc -c $< -o $@ -Icode/libs/include
