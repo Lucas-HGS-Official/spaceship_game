@@ -139,10 +139,8 @@ void player_controls(entity_t* entities, float delta_time) {
     Vector2 player_direction = { .x = 0, .y = 0 };
     float player_speed = 300.f;
 
-    if (IsKeyDown(KEY_A)) { player_direction.x += -1; };
-    if (IsKeyDown(KEY_D)) { player_direction.x +=  1; };
-    if (IsKeyDown(KEY_W)) { player_direction.y += -1; };
-    if (IsKeyDown(KEY_S)) { player_direction.y +=  1; };
+    player_direction.x = (float) (IsKeyDown(KEY_D) - IsKeyDown(KEY_A));
+    player_direction.y = (float) (IsKeyDown(KEY_S) - IsKeyDown(KEY_W));
 
     player_direction = Vector2Normalize(player_direction);
     Vector2 player_movement = Vector2Scale(player_direction, player_speed);
