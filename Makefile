@@ -4,10 +4,17 @@ OBJ = $(patsubst code/src/%.c, code/obj/%.o, $(SRC))
 LIB_SRC = $(wildcard code/libs/src/*.c)
 LIB_OBJ = $(patsubst code/libs/src/%.c, code/libs/obj/%.o, $(LIB_SRC))
 
+###################################
+# Build Everything
+###################################
 default: from_scratch
 
 from_scratch: lib_build clean build
+###################################
 
+###################################
+# Build Game
+###################################
 build: lib_copy $(TARGET)
 
 $(TARGET): $(OBJ)
@@ -19,8 +26,11 @@ code/obj/%.o : code/src/%.c
 clean:
 	rm -f code/obj/*.o
 	rm -f $(TARGET)
+###################################
 
-
+###################################
+# Build Libs
+###################################
 lib_build: lib_clean $(LIB_OBJ)
 
 code/libs/obj/%.o : code/libs/src/%.c
@@ -31,6 +41,10 @@ lib_copy:
 
 lib_clean:
 	rm -f code/libs/obj/*.o
+###################################
 
+###################################
+# Run Game
+###################################
 run:
 	./$(TARGET)

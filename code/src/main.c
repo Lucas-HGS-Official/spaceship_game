@@ -8,17 +8,35 @@ typedef struct Entity {
 } entity_t;
 
 
-
-void setup();
+void game_setup(entity_t* entities);
 void game_loop(entity_t* entities);
-void destroy_game(entity_t* entities);
+void game_destroy(entity_t* entities);
+
+void game_render(entity_t* entities);
 
 int main(int argc, char const *argv[]) {
-
-    setup();
-
     entity_t entities[MAX_NUM_ENTITIES];
-    
+
+    game_setup(entities);
+    game_loop(entities);
+    game_destroy(entities);
+
+    return 0;
+}
+
+
+void game_setup(entity_t* entities){
+    // Initialization
+    //--------------------------------------------------------------------------------------
+    const int screenWidth = WINDOW_WIDTH;
+    const int screenHeight = WINDOW_HEIGHT;
+
+    InitWindow(screenWidth, screenHeight, "Space Game");
+    SetRandomSeed(RANDOM_SEED);
+
+    SetTargetFPS(FPS);               // Set our game to run at 60 frames-per-second
+    //--------------------------------------------------------------------------------------
+
     int i = 0;
 
     // Stars
@@ -65,32 +83,11 @@ int main(int argc, char const *argv[]) {
     // Player
     entity_t player = {
         .texture = LoadTexture("resources/images/player.png"),
-        .src_rect = { 0, 0, player.texture.width, player.texture.height },
+        .src_rect = { .width = player.texture.width, .height = player.texture.height },
         .dest_rect = { WINDOW_WIDTH/2, WINDOW_HEIGHT/2, player.texture.width, player.texture.height },
         .origin = { player.texture.width/2, player.texture.height/2 },
     };
     entities[i] = player; i++;
-
-
-    game_loop(entities);
-    destroy_game(entities);
-
-    return 0;
-}
-
-
-void setup(){
-    // Initialization
-    //--------------------------------------------------------------------------------------
-    const int screenWidth = WINDOW_WIDTH;
-    const int screenHeight = WINDOW_HEIGHT;
-
-    InitWindow(screenWidth, screenHeight, "Space Game");
-    SetRandomSeed(RANDOM_SEED);
-
-    SetTargetFPS(FPS);               // Set our game to run at 60 frames-per-second
-    //--------------------------------------------------------------------------------------
-
 }
 
 void game_loop(entity_t* entities) {
@@ -110,24 +107,11 @@ void game_loop(entity_t* entities) {
         entities[23].dest_rect.x += player_movement.x * delta_time;
         entities[23].dest_rect.y += player_movement.y * delta_time;
 
-        // Draw
-        //----------------------------------------------------------------------------------
-        BeginDrawing();
-
-            ClearBackground(DARKBLUE);
-
-            DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
-            for (int i = 0; i < MAX_NUM_ENTITIES; i++) {
-                DrawTexturePro(entities[i].texture, entities[i].src_rect, entities[i].dest_rect, entities[i].origin, 0.f, WHITE);
-            }
-
-        EndDrawing();
-        //----------------------------------------------------------------------------------
+        game_render(entities);
     }
-
 }
 
-void destroy_game(entity_t* entities) {
+void game_destroy(entity_t* entities) {
     // De-Initialization
     //--------------------------------------------------------------------------------------
     for (int i = 0; i < MAX_NUM_ENTITIES; i++) {
@@ -136,5 +120,20 @@ void destroy_game(entity_t* entities) {
 
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
+}
 
+void game_render(entity_t* entities) {
+    // Draw
+    //----------------------------------------------------------------------------------
+    BeginDrawing();
+
+        ClearBackground(DARKBLUE);
+
+        DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
+        for (int i = 0; i < MAX_NUM_ENTITIES; i++) {
+            DrawTexturePro(entities[i].texture, entities[i].src_rect, entities[i].dest_rect, entities[i].origin, 0.f, WHITE);
+        }
+
+    EndDrawing();
+    //----------------------------------------------------------------------------------
 }
