@@ -12,6 +12,8 @@ void game_setup(entity_t* entities);
 void game_loop(entity_t* entities);
 void game_destroy(entity_t* entities);
 
+void player_controls(entity_t* entities, float delta_time);
+
 void game_render(entity_t* entities);
 
 int main(int argc, char const *argv[]) {
@@ -91,22 +93,17 @@ void game_setup(entity_t* entities){
 }
 
 void game_loop(entity_t* entities) {
-    Vector2 player_direction = { .x = 2, .y = -1 };
-    player_direction = Vector2Normalize(player_direction);
-    float player_speed = 100.f;
-    Vector2 player_movement = Vector2Scale(player_direction, player_speed);
-
     // Main game loop
     while (!WindowShouldClose()) {  // Detect window close button or ESC key
+        float delta_time = GetFrameTime();
+        
         // Update
         //----------------------------------------------------------------------------------
-        // TODO: Update your variables here
+
+        player_controls(&entities[23], delta_time);
+
         //----------------------------------------------------------------------------------
-        float delta_time = GetFrameTime();
-
-        entities[23].dest_rect.x += player_movement.x * delta_time;
-        entities[23].dest_rect.y += player_movement.y * delta_time;
-
+        
         game_render(entities);
     }
 }
@@ -136,4 +133,20 @@ void game_render(entity_t* entities) {
 
     EndDrawing();
     //----------------------------------------------------------------------------------
+}
+
+void player_controls(entity_t* entities, float delta_time) {
+    Vector2 player_direction = { .x = 0, .y = 0 };
+    float player_speed = 300.f;
+
+    if (IsKeyDown(KEY_A)) { player_direction.x += -1; };
+    if (IsKeyDown(KEY_D)) { player_direction.x +=  1; };
+    if (IsKeyDown(KEY_W)) { player_direction.y += -1; };
+    if (IsKeyDown(KEY_S)) { player_direction.y +=  1; };
+
+    player_direction = Vector2Normalize(player_direction);
+    Vector2 player_movement = Vector2Scale(player_direction, player_speed);
+
+    entities->dest_rect.x += player_movement.x * delta_time;
+    entities->dest_rect.y += player_movement.y * delta_time;
 }
