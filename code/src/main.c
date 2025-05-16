@@ -1,23 +1,23 @@
 #include "settings.h"
 
-typedef struct Entity {
+typedef struct Sprite {
     Texture2D texture;
     Rectangle src_rect;
     Rectangle dest_rect;
     Vector2 origin;
-} entity_t;
+} sprite_t;
 
 
-void game_setup(entity_t* entities);
-void game_loop(entity_t* entities);
-void game_destroy(entity_t* entities);
+void game_setup(sprite_t* entities);
+void game_loop(sprite_t* entities);
+void game_destroy(sprite_t* entities);
 
-void player_controls(entity_t* entities, float delta_time);
+void player_controls(sprite_t* entities, float delta_time);
 
-void game_render(entity_t* entities);
+void game_render(sprite_t* entities);
 
 int main(int argc, char const *argv[]) {
-    entity_t entities[MAX_NUM_ENTITIES];
+    sprite_t entities[MAX_NUM_ENTITIES];
 
     game_setup(entities);
     game_loop(entities);
@@ -27,7 +27,7 @@ int main(int argc, char const *argv[]) {
 }
 
 
-void game_setup(entity_t* entities){
+void game_setup(sprite_t* entities){
     // Initialization
     //--------------------------------------------------------------------------------------
     const int screenWidth = WINDOW_WIDTH;
@@ -44,7 +44,7 @@ void game_setup(entity_t* entities){
     // Stars
     Texture2D star_texture = LoadTexture("resources/images/star.png");
     for (; i < 21;) {
-        entity_t star = {
+        sprite_t star = {
             .texture = star_texture,
             .src_rect = { .width = star.texture.width, .height = star.texture.height },
             .dest_rect = {
@@ -58,7 +58,7 @@ void game_setup(entity_t* entities){
     };
 
     // Meteor
-    entity_t meteor = {
+    sprite_t meteor = {
         .texture = LoadTexture("resources/images/meteor.png"),
         .src_rect = { .width = meteor.texture.width, .height = meteor.texture.height },
         .dest_rect = {
@@ -71,7 +71,7 @@ void game_setup(entity_t* entities){
     entities[i] = meteor; i++;
 
     // Laser
-    entity_t laser = {
+    sprite_t laser = {
         .texture = LoadTexture("resources/images/laser.png"),
         .src_rect = { .width = laser.texture.width, .height = laser.texture.height },
         .dest_rect = {
@@ -83,7 +83,7 @@ void game_setup(entity_t* entities){
     entities[i] = laser; i++;
 
     // Player
-    entity_t player = {
+    sprite_t player = {
         .texture = LoadTexture("resources/images/player.png"),
         .src_rect = { .width = player.texture.width, .height = player.texture.height },
         .dest_rect = { WINDOW_WIDTH/2, WINDOW_HEIGHT/2, player.texture.width, player.texture.height },
@@ -92,7 +92,7 @@ void game_setup(entity_t* entities){
     entities[i] = player; i++;
 }
 
-void game_loop(entity_t* entities) {
+void game_loop(sprite_t* entities) {
     // Main game loop
     while (!WindowShouldClose()) {  // Detect window close button or ESC key
         float delta_time = GetFrameTime();
@@ -108,7 +108,7 @@ void game_loop(entity_t* entities) {
     }
 }
 
-void game_destroy(entity_t* entities) {
+void game_destroy(sprite_t* entities) {
     // De-Initialization
     //--------------------------------------------------------------------------------------
     for (int i = 0; i < MAX_NUM_ENTITIES; i++) {
@@ -119,7 +119,7 @@ void game_destroy(entity_t* entities) {
     //--------------------------------------------------------------------------------------
 }
 
-void game_render(entity_t* entities) {
+void game_render(sprite_t* entities) {
     // Draw
     //----------------------------------------------------------------------------------
     BeginDrawing();
@@ -135,7 +135,7 @@ void game_render(entity_t* entities) {
     //----------------------------------------------------------------------------------
 }
 
-void player_controls(entity_t* entities, float delta_time) {
+void player_controls(sprite_t* entities, float delta_time) {
     Vector2 player_direction = { .x = 0, .y = 0 };
     float player_speed = 300.f;
 
