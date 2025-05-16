@@ -7,7 +7,6 @@
 #include "raymath.h"
 
 #include "flecs.h"
-#include "cute_tiled.h"
 
 #define WINDOW_WIDTH 1280
 #define WINDOW_HEIGHT 720

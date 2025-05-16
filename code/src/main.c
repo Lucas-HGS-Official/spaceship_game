@@ -8,26 +8,27 @@ typedef struct Sprite {
 } sprite_t;
 
 
-void game_setup(sprite_t* entities);
-void game_loop(sprite_t* entities);
-void game_destroy(sprite_t* entities);
+void game_setup(sprite_t* entities, ecs_world_t* flecs_world);
+void game_loop(sprite_t* entities, ecs_world_t* flecs_world);
+void game_destroy(sprite_t* entities, ecs_world_t* flecs_world);
 
 void player_controls(sprite_t* entities, float delta_time);
 
 void game_render(sprite_t* entities);
 
-int main(int argc, char const *argv[]) {
+int main(void) {
     sprite_t entities[MAX_NUM_ENTITIES];
+    ecs_world_t* flecs_world = NULL;
 
-    game_setup(entities);
-    game_loop(entities);
-    game_destroy(entities);
+    game_setup(entities, flecs_world);
+    game_loop(entities, flecs_world);
+    game_destroy(entities, flecs_world);
 
     return 0;
 }
 
 
-void game_setup(sprite_t* entities){
+void game_setup(sprite_t* entities, ecs_world_t* flecs_world){
     // Initialization
     //--------------------------------------------------------------------------------------
     const int screenWidth = WINDOW_WIDTH;
@@ -37,6 +38,7 @@ void game_setup(sprite_t* entities){
     SetRandomSeed(RANDOM_SEED);
 
     SetTargetFPS(FPS);               // Set our game to run at 60 frames-per-second
+    flecs_world = ecs_init();
     //--------------------------------------------------------------------------------------
 
     int i = 0;
@@ -83,6 +85,7 @@ void game_setup(sprite_t* entities){
     entities[i] = laser; i++;
 
     // Player
+    ecs_entity_t player_flecs = ecs_entity(flecs_world, { .name = "player" });
     sprite_t player = {
         .texture = LoadTexture("resources/images/player.png"),
         .src_rect = { .width = player.texture.width, .height = player.texture.height },
@@ -92,7 +95,7 @@ void game_setup(sprite_t* entities){
     entities[i] = player; i++;
 }
 
-void game_loop(sprite_t* entities) {
+void game_loop(sprite_t* entities, ecs_world_t* flecs_world) {
     // Main game loop
     while (!WindowShouldClose()) {  // Detect window close button or ESC key
         float delta_time = GetFrameTime();
@@ -108,7 +111,7 @@ void game_loop(sprite_t* entities) {
     }
 }
 
-void game_destroy(sprite_t* entities) {
+void game_destroy(sprite_t* entities, ecs_world_t* flecs_world) {
     // De-Initialization
     //--------------------------------------------------------------------------------------
     for (int i = 0; i < MAX_NUM_ENTITIES; i++) {
