@@ -1,23 +1,33 @@
 #include "settings.h"
 
-typedef struct Sprite {
+typedef struct Entity {
     Texture2D texture;
     Rectangle src_rect;
     Rectangle dest_rect;
     Vector2 origin;
+} entity_t;
+
+typedef struct Sprite {
+    Texture2D texture;
+    Rectangle src_rect;
 } sprite_t;
 
+typedef struct Position {
+    Rectangle dest_rect;
+    Vector2 origin;
+} pos2_t;
 
-void game_setup(sprite_t* entities, ecs_world_t* world_flecs);
-void game_loop(sprite_t* entities, ecs_world_t* world_flecs);
-void game_destroy(sprite_t* entities, ecs_world_t* world_flecs);
 
-void player_controls(sprite_t* entities, float delta_time);
+void game_setup(entity_t* entities, ecs_world_t* world_flecs);
+void game_loop(entity_t* entities, ecs_world_t* world_flecs);
+void game_destroy(entity_t* entities, ecs_world_t* world_flecs);
 
-void game_render(sprite_t* entities);
+void player_controls(entity_t* entities, float delta_time);
+
+void game_render(entity_t* entities);
 
 int main(void) {
-    sprite_t entities[MAX_NUM_ENTITIES];
+    entity_t entities[MAX_NUM_ENTITIES];
     ecs_world_t* world_flecs = ecs_init();
 
     game_setup(entities, world_flecs);
@@ -28,11 +38,15 @@ int main(void) {
 }
 
 
-void game_setup(sprite_t* entities, ecs_world_t* world_flecs){
+void game_setup(entity_t* entities, ecs_world_t* world_flecs){
     // Initialization
     //--------------------------------------------------------------------------------------
     const int screenWidth = WINDOW_WIDTH;
     const int screenHeight = WINDOW_HEIGHT;
+
+    ECS_COMPONENT(world_flecs, entity_t);
+    ECS_COMPONENT(world_flecs, sprite_t);
+    ECS_COMPONENT(world_flecs, pos2_t);
 
     InitWindow(screenWidth, screenHeight, "Space Game");
     SetRandomSeed(RANDOM_SEED);
@@ -45,7 +59,7 @@ void game_setup(sprite_t* entities, ecs_world_t* world_flecs){
     // Stars
     Texture2D star_texture = LoadTexture("resources/images/star.png");
     for (; i < 21;) {
-        sprite_t star = {
+        entity_t star = {
             .texture = star_texture,
             .src_rect = { .width = star.texture.width, .height = star.texture.height },
             .dest_rect = {
@@ -59,7 +73,7 @@ void game_setup(sprite_t* entities, ecs_world_t* world_flecs){
     };
 
     // Meteor
-    sprite_t meteor = {
+    entity_t meteor = {
         .texture = LoadTexture("resources/images/meteor.png"),
         .src_rect = { .width = meteor.texture.width, .height = meteor.texture.height },
         .dest_rect = {
@@ -72,7 +86,7 @@ void game_setup(sprite_t* entities, ecs_world_t* world_flecs){
     entities[i] = meteor; i++;
 
     // Laser
-    sprite_t laser = {
+    entity_t laser = {
         .texture = LoadTexture("resources/images/laser.png"),
         .src_rect = { .width = laser.texture.width, .height = laser.texture.height },
         .dest_rect = {
@@ -85,16 +99,25 @@ void game_setup(sprite_t* entities, ecs_world_t* world_flecs){
 
     // Player
     ecs_entity_t player_flecs = ecs_entity(world_flecs, { .name = "player" });
-    sprite_t player = {
+    entity_t player = {
         .texture = LoadTexture("resources/images/player.png"),
         .src_rect = { .width = player.texture.width, .height = player.texture.height },
         .dest_rect = { WINDOW_WIDTH/2, WINDOW_HEIGHT/2, player.texture.width, player.texture.height },
         .origin = { player.texture.width/2, player.texture.height/2 },
     };
+    ECS_ENTITY(world_flecs, Player, 0);
+    ecs_set(world_flecs, Player, sprite_t, {
+        .texture = LoadTexture("resources/images/player.png"),
+        .src_rect = { .width = player.texture.width, .height = player.texture.height },
+    });
+    ecs_set(world_flecs, Player, pos2_t, {
+        .dest_rect = { WINDOW_WIDTH/2, WINDOW_HEIGHT/2, player.texture.width, player.texture.height },
+        .origin = { player.texture.width/2, player.texture.height/2 },
+    });
     entities[i] = player; i++;
 }
 
-void game_loop(sprite_t* entities, ecs_world_t* world_flecs) {
+void game_loop(entity_t* entities, ecs_world_t* world_flecs) {
     // Main game loop
     while (!WindowShouldClose()) {  // Detect window close button or ESC key
         float delta_time = GetFrameTime();
@@ -110,7 +133,7 @@ void game_loop(sprite_t* entities, ecs_world_t* world_flecs) {
     }
 }
 
-void game_destroy(sprite_t* entities, ecs_world_t* world_flecs) {
+void game_destroy(entity_t* entities, ecs_world_t* world_flecs) {
     // De-Initialization
     //--------------------------------------------------------------------------------------
     for (int i = 0; i < MAX_NUM_ENTITIES; i++) {
@@ -122,7 +145,7 @@ void game_destroy(sprite_t* entities, ecs_world_t* world_flecs) {
     //--------------------------------------------------------------------------------------
 }
 
-void game_render(sprite_t* entities) {
+void game_render(entity_t* entities) {
     // Draw
     //----------------------------------------------------------------------------------
     BeginDrawing();
@@ -138,7 +161,7 @@ void game_render(sprite_t* entities) {
     //----------------------------------------------------------------------------------
 }
 
-void player_controls(sprite_t* entities, float delta_time) {
+void player_controls(entity_t* entities, float delta_time) {
     Vector2 player_direction = { .x = 0, .y = 0 };
     float player_speed = 300.f;
 
