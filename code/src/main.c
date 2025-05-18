@@ -8,7 +8,7 @@ typedef struct Entity {
 } entity_t;
 
 typedef struct Sprite {
-    Texture2D texture;
+    Texture2D* texture;
     Rectangle src_rect;
 } sprite_t;
 
@@ -71,23 +71,51 @@ void game_setup(entity_t* entities, ecs_world_t* world_flecs){
         };
         entities[i] = star; i++;
     };
+    ecs_entity_t Star = ecs_entity(world_flecs, { .name = "star" });
+    ecs_set(world_flecs, Star, sprite_t, {
+        .texture = &star_texture,
+        .src_rect = { .width = star_texture.width, .height = star_texture.height },
+    });
+    ecs_set(world_flecs, Star, pos2_t, {
+        .dest_rect = {
+            .width = star_texture.width, .height = star_texture.height,
+            .x = GetRandomValue(star_texture.width, WINDOW_WIDTH - star_texture.width),
+            .y = GetRandomValue(star_texture.height, WINDOW_HEIGHT - star_texture.height),
+        },
+        .origin = { 0, 0 },
+    });
 
     // Meteor
+    Texture2D meteor_texture = LoadTexture("resources/images/meteor.png");
     entity_t meteor = {
-        .texture = LoadTexture("resources/images/meteor.png"),
+        .texture = meteor_texture,
         .src_rect = { .width = meteor.texture.width, .height = meteor.texture.height },
         .dest_rect = {
             .width = meteor.texture.width, .height = meteor.texture.height,
             .x = WINDOW_WIDTH/2,
             .y = WINDOW_HEIGHT/2,
         },
-        .origin = { .x = meteor.texture.width/2, .y = meteor.texture.height },
+        .origin = { .x = meteor.texture.width/2, .y = meteor.texture.height/2 },
     };
     entities[i] = meteor; i++;
+    ecs_entity_t Meteor = ecs_entity(world_flecs, { .name = "meteor" });
+    ecs_set(world_flecs, Meteor, sprite_t, {
+        .texture = &meteor_texture,
+        .src_rect = { .width = meteor_texture.width, .height = meteor_texture.height },
+    });
+    ecs_set(world_flecs, Meteor, pos2_t, {
+        .dest_rect = {
+            .width = meteor_texture.width, .height = meteor_texture.height,
+            .x = WINDOW_WIDTH/2,
+            .y = WINDOW_HEIGHT/2,
+        },
+        .origin = { .x = meteor_texture.width/2, .y = meteor_texture.height/2 },
+    });
 
     // Laser
+    Texture2D laser_texture = LoadTexture("resources/images/laser.png");
     entity_t laser = {
-        .texture = LoadTexture("resources/images/laser.png"),
+        .texture = laser_texture,
         .src_rect = { .width = laser.texture.width, .height = laser.texture.height },
         .dest_rect = {
             .width = laser.texture.width, .height = laser.texture.height,
@@ -96,25 +124,38 @@ void game_setup(entity_t* entities, ecs_world_t* world_flecs){
         },
     };
     entities[i] = laser; i++;
+    ecs_entity_t Laser = ecs_entity(world_flecs, { .name = "laser" });
+    ecs_set(world_flecs, Laser, sprite_t, {
+        .texture = &laser_texture,
+        .src_rect = { .width = laser_texture.width, .height = laser_texture.height },
+    });
+    ecs_set(world_flecs, Laser, pos2_t, {
+        .dest_rect = {
+            .width = laser_texture.width, .height = laser_texture.height,
+            .x = laser_texture.width + 25,
+            .y = WINDOW_HEIGHT - (laser_texture.height + 25),
+        },
+        .origin = { .x = laser_texture.width/2, .y = laser_texture.height/2 },
+    });
 
     // Player
-    ecs_entity_t player_flecs = ecs_entity(world_flecs, { .name = "player" });
+    Texture2D player_texture = LoadTexture("resources/images/player.png");
     entity_t player = {
-        .texture = LoadTexture("resources/images/player.png"),
+        .texture = player_texture,
         .src_rect = { .width = player.texture.width, .height = player.texture.height },
         .dest_rect = { WINDOW_WIDTH/2, WINDOW_HEIGHT/2, player.texture.width, player.texture.height },
         .origin = { player.texture.width/2, player.texture.height/2 },
     };
-    ECS_ENTITY(world_flecs, Player, 0);
+    entities[i] = player; i++;
+    ecs_entity_t Player = ecs_entity(world_flecs, { .name = "player" });
     ecs_set(world_flecs, Player, sprite_t, {
-        .texture = LoadTexture("resources/images/player.png"),
-        .src_rect = { .width = player.texture.width, .height = player.texture.height },
+        .texture = &player_texture,
+        .src_rect = { .width = player_texture.width, .height = player_texture.height },
     });
     ecs_set(world_flecs, Player, pos2_t, {
-        .dest_rect = { WINDOW_WIDTH/2, WINDOW_HEIGHT/2, player.texture.width, player.texture.height },
-        .origin = { player.texture.width/2, player.texture.height/2 },
+        .dest_rect = { WINDOW_WIDTH/2, WINDOW_HEIGHT/2, player_texture.width, player_texture.height },
+        .origin = { player_texture.width/2, player_texture.height/2 },
     });
-    entities[i] = player; i++;
 }
 
 void game_loop(entity_t* entities, ecs_world_t* world_flecs) {
