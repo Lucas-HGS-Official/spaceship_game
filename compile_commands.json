@@ -1,0 +1,28 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/clang",
+      "-c",
+      "-Icode/include",
+      "-o",
+      "code/obj/game.o",
+      "code/src/game.c"
+    ],
+    "directory": "/home/lhgs/dev/C/spaceship_game",
+    "file": "/home/lhgs/dev/C/spaceship_game/code/src/game.c",
+    "output": "/home/lhgs/dev/C/spaceship_game/code/obj/game.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang",
+      "-c",
+      "-Icode/include",
+      "-o",
+      "code/obj/main.o",
+      "code/src/main.c"
+    ],
+    "directory": "/home/lhgs/dev/C/spaceship_game",
+    "file": "/home/lhgs/dev/C/spaceship_game/code/src/main.c",
+    "output": "/home/lhgs/dev/C/spaceship_game/code/obj/main.o"
+  }
+]
