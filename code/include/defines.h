@@ -8,5 +8,4 @@
 
 #define GAME_NAME "Raylib Spaceship game"
 
-
 #endif
