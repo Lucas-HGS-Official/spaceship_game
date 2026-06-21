@@ -2,3 +2,4 @@ bin/game
 code/obj/*.o
 code/libs/obj/*.o
 ray_pong_clone
+spaceship_raylib_game
