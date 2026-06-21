@@ -6,8 +6,29 @@
 
 #define STARS_NUM 20
 
-static Texture2D player_texture = (Texture2D) {};
-static Texture2D star_texture = (Texture2D) {};
+typedef struct Sprite {
+    Texture2D texture;
+    Rectangle src_rec;
+    Rectangle dest_rec;
+    Vector2 origin;
+} Sprite;
+
+// static Texture2D player_texture = {};
+// static Rectangle player_src_rec = {};
+// static Rectangle player_dest_rec = {};
+// static Vector2 player_origin = {};
+static Sprite player_sprite = {};
+static Vector2 player_direction = {};
+
+// static Texture2D meteor_texture = {};
+// static Rectangle meteor_src_rec = {};
+// static Rectangle meteor_dest_rec = {};
+// static Vector2 meteor_origin = {};
+static Sprite meteor_sprite = {};
+
+static Sprite laser_sprite = {};
+
+static Texture2D star_texture = {};
 static Vector2 star_coords_array[STARS_NUM] = {};
 
 
@@ -16,6 +37,8 @@ void _draw_game(void);
 
 Vector2 _gen_rand_coords(void);
 void _draw_stars(void);
+void _init_sprite(Sprite* sprite, char* texture_file_path);
+void _draw_sprite(Sprite* sprite);
 
 
 void game_init(void) {
@@ -23,7 +46,24 @@ void game_init(void) {
     InitAudioDevice();
     SetTargetFPS(60);
 
-    player_texture = LoadTexture("resources/images/player.png");
+    // player_texture = LoadTexture("resources/images/player.png");
+    // player_src_rec = (Rectangle) {
+    //     .width = player_texture.width, .height = player_texture.height,
+    //     .x=0, .y=0
+    // };
+    // player_dest_rec = (Rectangle) {
+    //     .height=player_src_rec.height, .width=player_src_rec.width,
+    //     .x=WINDOW_WIDTH/2.f, .y=WINDOW_HEIGHT/2.f,
+    // };
+    // player_origin = (Vector2) { .x=player_src_rec.width/2.f, player_src_rec.height/2.f };
+    _init_sprite(&player_sprite, "resources/images/player.png");
+    player_direction = (Vector2) { .x=200.f, .y=0 };
+
+    _init_sprite(&meteor_sprite, "resources/images/meteor.png");
+
+    _init_sprite(&laser_sprite, "resources/images/laser.png");
+    laser_sprite.origin = (Vector2) { .x=laser_sprite.src_rec.width+20, .y=laser_sprite.src_rec.height+20 };
+    laser_sprite.dest_rec.x = WINDOW_WIDTH; laser_sprite.dest_rec.y = WINDOW_HEIGHT;
 
     star_texture = LoadTexture("resources/images/star.png");
 
@@ -45,7 +85,7 @@ void game_close(void) {
     CloseAudioDevice();
     CloseWindow();
 
-    UnloadTexture(player_texture);
+    UnloadTexture(player_sprite.texture);
     UnloadTexture(star_texture);
 
     return;
@@ -53,16 +93,21 @@ void game_close(void) {
 
 
 void _update_game(void) {
+    if ((player_sprite.dest_rec.x+player_sprite.dest_rec.width/2.f) >= WINDOW_WIDTH || (player_sprite.dest_rec.x-player_sprite.dest_rec.width/2.f) <= 0) {
+        player_direction.x *= -1;
+    }
+    player_sprite.dest_rec.x += player_direction.x * GetFrameTime();
 
+    return;
 }
 void _draw_game(void) {
     BeginDrawing();
     ClearBackground(DARKGRAY);
-    static float x = 50.f;
-    x++;
 
     _draw_stars();
-    DrawTextureEx(player_texture, (Vector2) { .x=x, .y=150 }, 0.f, 1.f, WHITE);
+    _draw_sprite(&meteor_sprite);
+    _draw_sprite(&player_sprite);
+    _draw_sprite(&laser_sprite);
 
     EndDrawing();
 
@@ -84,6 +129,27 @@ void _draw_stars(void) {
     for (int i=0; i<STARS_NUM; i++) {
         DrawTextureEx(star_texture, star_coords_array[i], 0.f, 1.f, WHITE);
     }
+
+    return;
+}
+
+void _init_sprite(Sprite* sprite, char* texture_file_path) {
+    sprite->texture = LoadTexture(texture_file_path);
+    sprite->src_rec = (Rectangle) {
+        .width = sprite->texture.width, .height = sprite->texture.height,
+        .x = 0, .y = 0,
+    };
+    sprite->dest_rec = (Rectangle) {
+        .height = sprite->src_rec.height, .width = sprite->src_rec.width,
+        .x = WINDOW_WIDTH/2.f, .y = WINDOW_HEIGHT/2.f, // TODO
+    };
+    sprite->origin = (Vector2) { .x = sprite->src_rec.width/2.f, .y = sprite->src_rec.height/2.f };
+
+    return;
+}
+
+void _draw_sprite(Sprite* sprite) {
+    DrawTexturePro(sprite->texture, sprite->src_rec, sprite->dest_rec, sprite->origin, 0.f, WHITE);
 
     return;
 }
