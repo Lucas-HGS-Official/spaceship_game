@@ -1,6 +1,7 @@
 #include "game.h"
 
 #include <raylib.h>
+#include <raymath.h>
 
 #include "defines.h"
 
@@ -15,6 +16,7 @@ typedef struct Sprite {
 
 static Sprite player_sprite = {};
 static Vector2 player_direction = {};
+static float player_speed = 0.f;
 
 static Sprite meteor_sprite = {};
 
@@ -39,7 +41,9 @@ void game_init(void) {
     SetTargetFPS(60);
 
     _init_sprite(&player_sprite, "resources/images/player.png");
-    player_direction = (Vector2) { .x=200.f, .y=0 };
+    player_direction = (Vector2) { .x=1.f, .y=1 };
+    player_direction = Vector2Normalize(player_direction);
+    player_speed = 400.f;
 
     _init_sprite(&meteor_sprite, "resources/images/meteor.png");
 
@@ -78,7 +82,12 @@ void _update_game(float dt) {
     if ((player_sprite.dest_rec.x+player_sprite.dest_rec.width/2.f) >= WINDOW_WIDTH || (player_sprite.dest_rec.x-player_sprite.dest_rec.width/2.f) <= 0) {
         player_direction.x *= -1;
     }
-    player_sprite.dest_rec.x += player_direction.x * dt;
+    if ((player_sprite.dest_rec.y+player_sprite.dest_rec.height/2.f) >= WINDOW_HEIGHT || (player_sprite.dest_rec.y-player_sprite.dest_rec.height/2.f) <= 0) {
+        player_direction.y *= -1;
+    }
+    player_sprite.dest_rec.x += player_direction.x * player_speed * dt;
+    player_sprite.dest_rec.y += player_direction.y * player_speed * dt;
+
 
     return;
 }
