@@ -2,6 +2,7 @@
 
 #include <raylib.h>
 #include <raymath.h>
+#include <stdio.h>
 
 #include "defines.h"
 
@@ -41,7 +42,7 @@ void game_init(void) {
     SetTargetFPS(60);
 
     _init_sprite(&player_sprite, "resources/images/player.png");
-    player_direction = (Vector2) { .x=1.f, .y=1 };
+    player_direction = (Vector2) {};
     player_direction = Vector2Normalize(player_direction);
     player_speed = 400.f;
 
@@ -79,15 +80,12 @@ void game_close(void) {
 
 
 void _update_game(float dt) {
-    if ((player_sprite.dest_rec.x+player_sprite.dest_rec.width/2.f) >= WINDOW_WIDTH || (player_sprite.dest_rec.x-player_sprite.dest_rec.width/2.f) <= 0) {
-        player_direction.x *= -1;
-    }
-    if ((player_sprite.dest_rec.y+player_sprite.dest_rec.height/2.f) >= WINDOW_HEIGHT || (player_sprite.dest_rec.y-player_sprite.dest_rec.height/2.f) <= 0) {
-        player_direction.y *= -1;
-    }
+    player_direction = (Vector2){ (int)IsKeyDown(KEY_RIGHT) - (int)IsKeyDown(KEY_LEFT), IsKeyDown(KEY_DOWN) - (int)IsKeyDown(KEY_UP) };
+    player_direction = Vector2Normalize(player_direction);
+    if (IsKeyPressed(KEY_SPACE)) { printf("\nfire laser\n"); }
+
     player_sprite.dest_rec.x += player_direction.x * player_speed * dt;
     player_sprite.dest_rec.y += player_direction.y * player_speed * dt;
-
 
     return;
 }
