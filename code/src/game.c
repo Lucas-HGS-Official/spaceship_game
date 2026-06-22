@@ -13,17 +13,9 @@ typedef struct Sprite {
     Vector2 origin;
 } Sprite;
 
-// static Texture2D player_texture = {};
-// static Rectangle player_src_rec = {};
-// static Rectangle player_dest_rec = {};
-// static Vector2 player_origin = {};
 static Sprite player_sprite = {};
 static Vector2 player_direction = {};
 
-// static Texture2D meteor_texture = {};
-// static Rectangle meteor_src_rec = {};
-// static Rectangle meteor_dest_rec = {};
-// static Vector2 meteor_origin = {};
 static Sprite meteor_sprite = {};
 
 static Sprite laser_sprite = {};
@@ -32,7 +24,7 @@ static Texture2D star_texture = {};
 static Vector2 star_coords_array[STARS_NUM] = {};
 
 
-void _update_game(void);
+void _update_game(float dt);
 void _draw_game(void);
 
 Vector2 _gen_rand_coords(void);
@@ -46,16 +38,6 @@ void game_init(void) {
     InitAudioDevice();
     SetTargetFPS(60);
 
-    // player_texture = LoadTexture("resources/images/player.png");
-    // player_src_rec = (Rectangle) {
-    //     .width = player_texture.width, .height = player_texture.height,
-    //     .x=0, .y=0
-    // };
-    // player_dest_rec = (Rectangle) {
-    //     .height=player_src_rec.height, .width=player_src_rec.width,
-    //     .x=WINDOW_WIDTH/2.f, .y=WINDOW_HEIGHT/2.f,
-    // };
-    // player_origin = (Vector2) { .x=player_src_rec.width/2.f, player_src_rec.height/2.f };
     _init_sprite(&player_sprite, "resources/images/player.png");
     player_direction = (Vector2) { .x=200.f, .y=0 };
 
@@ -75,7 +57,7 @@ void game_init(void) {
 }
 void game_loop(void) {
     while (!WindowShouldClose()) {
-        _update_game();
+        _update_game(GetFrameTime());
         _draw_game();
     }
 
@@ -92,11 +74,11 @@ void game_close(void) {
 }
 
 
-void _update_game(void) {
+void _update_game(float dt) {
     if ((player_sprite.dest_rec.x+player_sprite.dest_rec.width/2.f) >= WINDOW_WIDTH || (player_sprite.dest_rec.x-player_sprite.dest_rec.width/2.f) <= 0) {
         player_direction.x *= -1;
     }
-    player_sprite.dest_rec.x += player_direction.x * GetFrameTime();
+    player_sprite.dest_rec.x += player_direction.x * dt;
 
     return;
 }
