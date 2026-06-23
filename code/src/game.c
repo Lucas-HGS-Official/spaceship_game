@@ -15,9 +15,13 @@ typedef struct Sprite {
     Vector2 origin;
 } Sprite;
 
-static Sprite player_sprite = {};
-static Vector2 player_direction = {};
-static float player_speed = 0.f;
+typedef struct Player {
+    Sprite spr;
+    Vector2 direction;
+    float speed;
+} Player;
+
+static Player player = {};
 
 static Sprite meteor_sprite = {};
 
@@ -34,6 +38,8 @@ Vector2 _gen_rand_coords(void);
 void _draw_stars(void);
 void _init_sprite(Sprite* sprite, char* texture_file_path);
 void _draw_sprite(Sprite* sprite);
+void _init_player(Player* player);
+void _update_player(float dt);
 
 
 void game_init(void) {
@@ -41,10 +47,7 @@ void game_init(void) {
     InitAudioDevice();
     SetTargetFPS(60);
 
-    _init_sprite(&player_sprite, "resources/images/player.png");
-    player_direction = (Vector2) {};
-    player_direction = Vector2Normalize(player_direction);
-    player_speed = 400.f;
+    _init_player(&player);
 
     _init_sprite(&meteor_sprite, "resources/images/meteor.png");
 
@@ -72,7 +75,7 @@ void game_close(void) {
     CloseAudioDevice();
     CloseWindow();
 
-    UnloadTexture(player_sprite.texture);
+    UnloadTexture(player.spr.texture);
     UnloadTexture(star_texture);
 
     return;
@@ -80,12 +83,7 @@ void game_close(void) {
 
 
 void _update_game(float dt) {
-    player_direction = (Vector2){ (int)IsKeyDown(KEY_RIGHT) - (int)IsKeyDown(KEY_LEFT), IsKeyDown(KEY_DOWN) - (int)IsKeyDown(KEY_UP) };
-    player_direction = Vector2Normalize(player_direction);
-    if (IsKeyPressed(KEY_SPACE)) { printf("\nfire laser\n"); }
-
-    player_sprite.dest_rec.x += player_direction.x * player_speed * dt;
-    player_sprite.dest_rec.y += player_direction.y * player_speed * dt;
+    _update_player(dt);
 
     return;
 }
@@ -95,7 +93,7 @@ void _draw_game(void) {
 
     _draw_stars();
     _draw_sprite(&meteor_sprite);
-    _draw_sprite(&player_sprite);
+    _draw_sprite(&player.spr);
     _draw_sprite(&laser_sprite);
 
     EndDrawing();
@@ -139,6 +137,26 @@ void _init_sprite(Sprite* sprite, char* texture_file_path) {
 
 void _draw_sprite(Sprite* sprite) {
     DrawTexturePro(sprite->texture, sprite->src_rec, sprite->dest_rec, sprite->origin, 0.f, WHITE);
+
+    return;
+}
+
+void _init_player(Player* player) {
+    _init_sprite(&(player->spr), "resources/images/player.png");
+    player->direction = (Vector2) {};
+    player->direction = Vector2Normalize(player->direction);
+    player->speed = 400.f;
+
+    return;
+}
+
+void _update_player(float dt) {
+    player.direction = (Vector2){ (int)IsKeyDown(KEY_RIGHT) - (int)IsKeyDown(KEY_LEFT), IsKeyDown(KEY_DOWN) - (int)IsKeyDown(KEY_UP) };
+    player.direction = Vector2Normalize(player.direction);
+    if (IsKeyPressed(KEY_SPACE)) { printf("\nfire laser\n"); }
+
+    player.spr.dest_rec.x += player.direction.x * player.speed * dt;
+    player.spr.dest_rec.y += player.direction.y * player.speed * dt;
 
     return;
 }
