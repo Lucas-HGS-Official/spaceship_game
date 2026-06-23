@@ -1,7 +1,6 @@
 #include "game.h"
 
 #include <stdbool.h>
-#include <stdio.h>
 
 #include <raylib.h>
 #include <raymath.h>
@@ -9,6 +8,8 @@
 #include "defines.h"
 
 #define STARS_NUM 20
+#define MAX_LASERS 20
+#define LASER_COOLDOWN .5f
 
 typedef struct Sprite {
     Texture2D* texture;
@@ -27,22 +28,23 @@ typedef struct Player {
 } Player;
 
 typedef struct Laser {
-    Sprite laser;
+    bool is_in_use;
+    Sprite spr;
     Vector2 direction;
     float speed;
 } Laser;
 
-static Player player = {};
+static Player player = {0};
 
-static Sprite meteor_sprite = {};
+static Sprite meteor_sprite = {0};
 static double meteor_start_time = 0;
 
-static Sprite laser_sprite = {};
+static Sprite laser_sprite = {0};
+static Laser laser_list[MAX_LASERS] = {0};
 
-static Texture2D star_texture = {};
-static Vector2 star_coords_array[STARS_NUM] = {};
+static Texture2D star_texture = {0};
+static Vector2 star_coords_array[STARS_NUM] = {0};
 
-static Laser test_laser = {};
 
 void _update_game(float dt);
 void _draw_game(void);
@@ -58,27 +60,21 @@ void _update_player(float dt);
 
 void _meteor_cooldown_timer(double cooldown);
 
+void _instance_laser(Vector2 position);
+void _draw_all_lasers(void);
+
 
 void game_init(void) {
     InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, GAME_NAME);
     InitAudioDevice();
     SetTargetFPS(60);
 
-    _init_player(&player, 2);
+    _init_player(&player, LASER_COOLDOWN);
 
     _init_sprite(&meteor_sprite, "resources/images/meteor.png");
     meteor_start_time = GetTime();
 
     _init_sprite(&laser_sprite, "resources/images/laser.png");
-    laser_sprite.origin = (Vector2) { .x=laser_sprite.src_rec.width+20, .y=laser_sprite.src_rec.height+20 };
-    laser_sprite.dest_rec.x = WINDOW_WIDTH; laser_sprite.dest_rec.y = WINDOW_HEIGHT;
-
-    test_laser = (Laser) {
-        .laser = laser_sprite,
-    };
-    test_laser.laser.origin = (Vector2) { 0, 0 };
-    test_laser.laser.dest_rec.y = 100;
-    test_laser.laser.dest_rec.x = 100;
 
     star_texture = LoadTexture("resources/images/star.png");
 
@@ -124,8 +120,7 @@ void _draw_game(void) {
 
     _draw_stars();
     _draw_sprite(&meteor_sprite);
-    _draw_sprite(&laser_sprite);
-    _draw_sprite(&test_laser.laser);
+    _draw_all_lasers();
     _draw_sprite(&player.spr);
 
     EndDrawing();
@@ -161,7 +156,7 @@ void _init_sprite(Sprite* sprite, char* texture_file_path) {
     };
     sprite->dest_rec = (Rectangle) {
         .height = sprite->src_rec.height, .width = sprite->src_rec.width,
-        .x = WINDOW_WIDTH/2.f, .y = WINDOW_HEIGHT/2.f, // TODO
+        .x = WINDOW_WIDTH/2.f, .y = WINDOW_HEIGHT/2.f,
     };
     sprite->origin = (Vector2) { .x = sprite->src_rec.width/2.f, .y = sprite->src_rec.height/2.f };
 
@@ -194,7 +189,7 @@ void _update_player(float dt) {
     player.direction = Vector2Normalize(player.direction);
     if (player.is_shot_ready) {
         if (IsKeyPressed(KEY_SPACE)) {
-            printf("\nfire laser\n");
+            _instance_laser((Vector2){ player.spr.dest_rec.x, player.spr.dest_rec.y });
             player.is_shot_ready = false;
             player.laser_start_time = GetTime();
         }
@@ -220,8 +215,35 @@ void _update_player(float dt) {
 
 void _meteor_cooldown_timer(double cooldown) {
     if (meteor_start_time + cooldown <= GetTime()) {
-        printf("\nCreate Meteor\n");
+        // printf("\nCreate Meteor\n");
         meteor_start_time = GetTime();
+    }
+
+    return;
+}
+
+void _instance_laser(Vector2 position) {
+    bool is_not_empty_slot = true;
+    int i=0;
+    for (i=0; i<MAX_LASERS && is_not_empty_slot; i++) {
+        if (!laser_list[i].is_in_use) {
+            is_not_empty_slot = false;
+            laser_list[i] = (Laser) {
+                .spr = laser_sprite,
+            };
+            laser_list[i].spr.dest_rec.x = position.x;
+            laser_list[i].spr.dest_rec.y = position.y;
+            laser_list[i].is_in_use = true;
+        } else { is_not_empty_slot = true; }
+    }
+
+    return;
+}
+
+void _draw_all_lasers(void) {
+    for (int i=0; i<MAX_LASERS && laser_list[i].is_in_use; i++) {
+        _draw_sprite(&laser_list[i].spr);
+        if (laser_list->spr.dest_rec.y <= -50) { laser_list[i].is_in_use = false; }
     }
 
     return;
