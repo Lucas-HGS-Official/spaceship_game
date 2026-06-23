@@ -166,7 +166,10 @@ void _init_player(Player* player, double laser_cooldown) {
 }
 
 void _update_player(float dt) {
-    player.direction = (Vector2){ (int)IsKeyDown(KEY_RIGHT) - (int)IsKeyDown(KEY_LEFT), IsKeyDown(KEY_DOWN) - (int)IsKeyDown(KEY_UP) };
+    player.direction = (Vector2){
+        .x = (int)IsKeyDown(KEY_RIGHT) - (int)IsKeyDown(KEY_LEFT),
+        .y =  IsKeyDown(KEY_DOWN) - (int)IsKeyDown(KEY_UP)
+    };
     player.direction = Vector2Normalize(player.direction);
     if (player.is_shot_ready) {
         if (IsKeyPressed(KEY_SPACE)) {
@@ -179,8 +182,17 @@ void _update_player(float dt) {
         player.is_shot_ready = true;
         player.laser_start_time = GetTime();
     }
-    player.spr.dest_rec.x += player.direction.x * player.speed * dt;
-    player.spr.dest_rec.y += player.direction.y * player.speed * dt;
+
+    Vector2 position = {
+        .x = player.spr.dest_rec.x + (player.direction.x * player.speed * dt),
+        .y = player.spr.dest_rec.y + (player.direction.y * player.speed * dt),
+    };
+    Vector2 half_size = {
+        .x = player.spr.dest_rec.width/2.f,
+        .y = player.spr.dest_rec.height/2.f,
+    };
+    player.spr.dest_rec.x = Clamp(position.x, half_size.x, WINDOW_WIDTH - half_size.x);
+    player.spr.dest_rec.y = Clamp(position.y, half_size.y, WINDOW_HEIGHT - half_size.y);
 
     return;
 }
