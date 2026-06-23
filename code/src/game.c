@@ -8,9 +8,14 @@
 #include "defines.h"
 
 #define STARS_NUM 20
-#define MAX_LASERS 30
+
 #define LASER_COOLDOWN .2f
+
+#define MAX_LASERS 30
 #define LASER_SPEED 1500
+
+#define MAX_METEORS 10
+#define METEOR_SPEED 600
 
 typedef struct Sprite {
     Texture2D* texture;
@@ -28,16 +33,23 @@ typedef struct Player {
     bool is_shot_ready;
 } Player;
 
-typedef struct Laser {
+typedef struct Meteor {
     bool is_in_use;
     Sprite spr;
     Vector2 direction;
+    float speed;
+} Meteor;
+
+typedef struct Laser {
+    bool is_in_use;
+    Sprite spr;
     float speed;
 } Laser;
 
 static Player player = {0};
 
 static Sprite meteor_sprite = {0};
+static Meteor meteor_list[MAX_METEORS] = {0};
 static double meteor_start_time = 0;
 
 static Sprite laser_sprite = {0};
@@ -60,6 +72,9 @@ void _init_player(Player* player, double laser_cooldown);
 void _update_player(float dt);
 
 void _meteor_cooldown_timer(double cooldown);
+void _instance_meteor(Vector2 position);
+void _draw_all_meteors(void);
+void _update_all_meteors(float dt);
 
 void _instance_laser(Vector2 position);
 void _draw_all_lasers(void);
@@ -117,6 +132,7 @@ void _update_game(float dt) {
     _update_player(dt);
     _meteor_cooldown_timer(0.5);
     _update_all_laser(dt);
+    _update_all_meteors(dt);
 
     return;
 }
@@ -125,8 +141,9 @@ void _draw_game(void) {
     ClearBackground(DARKGRAY);
 
     _draw_stars();
-    _draw_sprite(&meteor_sprite);
+    // _draw_sprite(&meteor_sprite);
     _draw_all_lasers();
+    _draw_all_meteors();
     _draw_sprite(&player.spr);
 
     EndDrawing();
@@ -167,7 +184,6 @@ void _init_sprite(Sprite* sprite, char* texture_file_path) {
 
     return;
 }
-
 void _draw_sprite(Sprite* sprite) {
     DrawTexturePro(*(sprite->texture), sprite->src_rec, sprite->dest_rec, sprite->origin, 0.f, WHITE);
 
@@ -185,7 +201,6 @@ void _init_player(Player* player, double laser_cooldown) {
 
     return;
 }
-
 void _update_player(float dt) {
     player.direction = (Vector2){
         .x = (int)IsKeyDown(KEY_RIGHT) - (int)IsKeyDown(KEY_LEFT),
@@ -220,7 +235,12 @@ void _update_player(float dt) {
 
 void _meteor_cooldown_timer(double cooldown) {
     if (meteor_start_time + cooldown <= GetTime()) {
-        // printf("\nCreate Meteor\n");
+        float half_meteor_width = meteor_sprite.texture->width/2.f;
+        Vector2 meteor_rand_coords = {
+            .x = GetRandomValue(half_meteor_width, WINDOW_WIDTH-half_meteor_width),
+            .y = GetRandomValue(-100, -200)
+        };
+        _instance_meteor(meteor_rand_coords);
         meteor_start_time = GetTime();
     }
 
@@ -240,30 +260,66 @@ void _instance_laser(Vector2 position) {
             laser_list[i].spr.dest_rec.y = position.y;
             laser_list[i].speed = LASER_SPEED;
 
-
             laser_list[i].is_in_use = true;
         } else { is_not_empty_slot = true; }
     }
 
     return;
 }
-
 void _draw_all_lasers(void) {
     for (int i=0; i<MAX_LASERS; i++) {
         if (laser_list[i].is_in_use) {
             _draw_sprite(&laser_list[i].spr);
         }
-        // if (laser_list->spr.dest_rec.y <= -50) { laser_list[i].is_in_use = false; }
     }
 
     return;
 }
-
 void _update_all_laser(float dt) {
     for (int i=0; i<MAX_LASERS; i++) {
         if (laser_list[i].is_in_use) {
             laser_list[i].spr.dest_rec.y -= laser_list[i].speed * dt;
             if (laser_list[i].spr.dest_rec.y <= -laser_sprite.dest_rec.height/2.f) { laser_list[i].is_in_use = false; }
+        }
+    }
+
+    return;
+}
+
+void _instance_meteor(Vector2 position) {
+    bool is_not_empty_slot = true;
+    int i=0;
+    for (i=0; i<MAX_METEORS && is_not_empty_slot; i++) {
+        if (!meteor_list[i].is_in_use) {
+            is_not_empty_slot = false;
+            meteor_list[i] = (Meteor) {
+                .spr = meteor_sprite,
+            };
+            meteor_list[i].spr.dest_rec.x = position.x;
+            meteor_list[i].spr.dest_rec.y = position.y;
+            meteor_list[i].speed = METEOR_SPEED;
+            // meteor_list[i].direction = direction;
+
+            meteor_list[i].is_in_use = true;
+        } else { is_not_empty_slot = true; }
+    }
+
+    return;
+}
+void _draw_all_meteors(void) {
+    for (int i=0; i<MAX_METEORS; i++) {
+        if (meteor_list[i].is_in_use) {
+            _draw_sprite(&meteor_list[i].spr);
+        }
+    }
+
+    return;
+}
+void _update_all_meteors(float dt) {
+    for (int i=0; i<MAX_METEORS; i++) {
+        if (meteor_list[i].is_in_use) {
+            meteor_list[i].spr.dest_rec.y += meteor_list[i].speed * dt;
+            if (meteor_list[i].spr.dest_rec.y >= WINDOW_HEIGHT+meteor_sprite.dest_rec.height/2.f) { meteor_list[i].is_in_use = false; }
         }
     }
 
