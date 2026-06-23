@@ -8,8 +8,9 @@
 #include "defines.h"
 
 #define STARS_NUM 20
-#define MAX_LASERS 20
-#define LASER_COOLDOWN .5f
+#define MAX_LASERS 30
+#define LASER_COOLDOWN .2f
+#define LASER_SPEED 1500
 
 typedef struct Sprite {
     Texture2D* texture;
@@ -62,6 +63,7 @@ void _meteor_cooldown_timer(double cooldown);
 
 void _instance_laser(Vector2 position);
 void _draw_all_lasers(void);
+void _update_all_laser(float dt);
 
 
 void game_init(void) {
@@ -104,6 +106,9 @@ void game_close(void) {
     UnloadTexture(*(meteor_sprite.texture));
     MemFree(meteor_sprite.texture);
 
+    UnloadTexture(*(laser_sprite.texture));
+    MemFree(laser_sprite.texture);
+
     return;
 }
 
@@ -111,6 +116,7 @@ void game_close(void) {
 void _update_game(float dt) {
     _update_player(dt);
     _meteor_cooldown_timer(0.5);
+    _update_all_laser(dt);
 
     return;
 }
@@ -138,7 +144,6 @@ Vector2 _gen_rand_coords(void) {
 
     return rand_coords;
 }
-
 void _draw_stars(void) {
     for (int i=0; i<STARS_NUM; i++) {
         DrawTextureEx(star_texture, star_coords_array[i], 0.f, 1.f, WHITE);
@@ -233,6 +238,9 @@ void _instance_laser(Vector2 position) {
             };
             laser_list[i].spr.dest_rec.x = position.x;
             laser_list[i].spr.dest_rec.y = position.y;
+            laser_list[i].speed = LASER_SPEED;
+
+
             laser_list[i].is_in_use = true;
         } else { is_not_empty_slot = true; }
     }
@@ -241,9 +249,22 @@ void _instance_laser(Vector2 position) {
 }
 
 void _draw_all_lasers(void) {
-    for (int i=0; i<MAX_LASERS && laser_list[i].is_in_use; i++) {
-        _draw_sprite(&laser_list[i].spr);
-        if (laser_list->spr.dest_rec.y <= -50) { laser_list[i].is_in_use = false; }
+    for (int i=0; i<MAX_LASERS; i++) {
+        if (laser_list[i].is_in_use) {
+            _draw_sprite(&laser_list[i].spr);
+        }
+        // if (laser_list->spr.dest_rec.y <= -50) { laser_list[i].is_in_use = false; }
+    }
+
+    return;
+}
+
+void _update_all_laser(float dt) {
+    for (int i=0; i<MAX_LASERS; i++) {
+        if (laser_list[i].is_in_use) {
+            laser_list[i].spr.dest_rec.y -= laser_list[i].speed * dt;
+            if (laser_list[i].spr.dest_rec.y <= -laser_sprite.dest_rec.height/2.f) { laser_list[i].is_in_use = false; }
+        }
     }
 
     return;
