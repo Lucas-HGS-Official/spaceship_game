@@ -11,7 +11,7 @@
 #define STARS_NUM 20
 
 typedef struct Sprite {
-    Texture2D texture;
+    Texture2D* texture;
     Rectangle src_rec;
     Rectangle dest_rec;
     Vector2 origin;
@@ -26,6 +26,12 @@ typedef struct Player {
     bool is_shot_ready;
 } Player;
 
+typedef struct Laser {
+    Sprite laser;
+    Vector2 direction;
+    float speed;
+} Laser;
+
 static Player player = {};
 
 static Sprite meteor_sprite = {};
@@ -36,6 +42,7 @@ static Sprite laser_sprite = {};
 static Texture2D star_texture = {};
 static Vector2 star_coords_array[STARS_NUM] = {};
 
+static Laser test_laser = {};
 
 void _update_game(float dt);
 void _draw_game(void);
@@ -66,6 +73,13 @@ void game_init(void) {
     laser_sprite.origin = (Vector2) { .x=laser_sprite.src_rec.width+20, .y=laser_sprite.src_rec.height+20 };
     laser_sprite.dest_rec.x = WINDOW_WIDTH; laser_sprite.dest_rec.y = WINDOW_HEIGHT;
 
+    test_laser = (Laser) {
+        .laser = laser_sprite,
+    };
+    test_laser.laser.origin = (Vector2) { 0, 0 };
+    test_laser.laser.dest_rec.y = 100;
+    test_laser.laser.dest_rec.x = 100;
+
     star_texture = LoadTexture("resources/images/star.png");
 
     for (int i=0; i<STARS_NUM; i++) {
@@ -86,8 +100,13 @@ void game_close(void) {
     CloseAudioDevice();
     CloseWindow();
 
-    UnloadTexture(player.spr.texture);
+    UnloadTexture(*(player.spr.texture));
+    MemFree(player.spr.texture);
+
     UnloadTexture(star_texture);
+
+    UnloadTexture(*(meteor_sprite.texture));
+    MemFree(meteor_sprite.texture);
 
     return;
 }
@@ -105,8 +124,9 @@ void _draw_game(void) {
 
     _draw_stars();
     _draw_sprite(&meteor_sprite);
-    _draw_sprite(&player.spr);
     _draw_sprite(&laser_sprite);
+    _draw_sprite(&test_laser.laser);
+    _draw_sprite(&player.spr);
 
     EndDrawing();
 
@@ -133,9 +153,10 @@ void _draw_stars(void) {
 }
 
 void _init_sprite(Sprite* sprite, char* texture_file_path) {
-    sprite->texture = LoadTexture(texture_file_path);
+    sprite->texture = MemAlloc(sizeof(Texture2D));
+    *(sprite->texture) = LoadTexture(texture_file_path);
     sprite->src_rec = (Rectangle) {
-        .width = sprite->texture.width, .height = sprite->texture.height,
+        .width = sprite->texture->width, .height = sprite->texture->height,
         .x = 0, .y = 0,
     };
     sprite->dest_rec = (Rectangle) {
@@ -148,7 +169,7 @@ void _init_sprite(Sprite* sprite, char* texture_file_path) {
 }
 
 void _draw_sprite(Sprite* sprite) {
-    DrawTexturePro(sprite->texture, sprite->src_rec, sprite->dest_rec, sprite->origin, 0.f, WHITE);
+    DrawTexturePro(*(sprite->texture), sprite->src_rec, sprite->dest_rec, sprite->origin, 0.f, WHITE);
 
     return;
 }
