@@ -1,8 +1,10 @@
 #include "game.h"
 
+#include <stdbool.h>
+#include <stdio.h>
+
 #include <raylib.h>
 #include <raymath.h>
-#include <stdio.h>
 
 #include "defines.h"
 
@@ -19,11 +21,15 @@ typedef struct Player {
     Sprite spr;
     Vector2 direction;
     float speed;
+    double laser_start_time;
+    double laser_cooldown;
+    bool is_shot_ready;
 } Player;
 
 static Player player = {};
 
 static Sprite meteor_sprite = {};
+static double meteor_start_time = 0;
 
 static Sprite laser_sprite = {};
 
@@ -36,10 +42,14 @@ void _draw_game(void);
 
 Vector2 _gen_rand_coords(void);
 void _draw_stars(void);
+
 void _init_sprite(Sprite* sprite, char* texture_file_path);
 void _draw_sprite(Sprite* sprite);
-void _init_player(Player* player);
+
+void _init_player(Player* player, double laser_cooldown);
 void _update_player(float dt);
+
+void _meteor_cooldown_timer(double cooldown);
 
 
 void game_init(void) {
@@ -47,9 +57,10 @@ void game_init(void) {
     InitAudioDevice();
     SetTargetFPS(60);
 
-    _init_player(&player);
+    _init_player(&player, 2);
 
     _init_sprite(&meteor_sprite, "resources/images/meteor.png");
+    meteor_start_time = GetTime();
 
     _init_sprite(&laser_sprite, "resources/images/laser.png");
     laser_sprite.origin = (Vector2) { .x=laser_sprite.src_rec.width+20, .y=laser_sprite.src_rec.height+20 };
@@ -84,6 +95,7 @@ void game_close(void) {
 
 void _update_game(float dt) {
     _update_player(dt);
+    _meteor_cooldown_timer(0.5);
 
     return;
 }
@@ -141,11 +153,14 @@ void _draw_sprite(Sprite* sprite) {
     return;
 }
 
-void _init_player(Player* player) {
+void _init_player(Player* player, double laser_cooldown) {
     _init_sprite(&(player->spr), "resources/images/player.png");
     player->direction = (Vector2) {};
     player->direction = Vector2Normalize(player->direction);
     player->speed = 400.f;
+    player->laser_start_time = GetTime();
+    player->laser_cooldown = laser_cooldown;
+    player->is_shot_ready = true;
 
     return;
 }
@@ -153,10 +168,28 @@ void _init_player(Player* player) {
 void _update_player(float dt) {
     player.direction = (Vector2){ (int)IsKeyDown(KEY_RIGHT) - (int)IsKeyDown(KEY_LEFT), IsKeyDown(KEY_DOWN) - (int)IsKeyDown(KEY_UP) };
     player.direction = Vector2Normalize(player.direction);
-    if (IsKeyPressed(KEY_SPACE)) { printf("\nfire laser\n"); }
-
+    if (player.is_shot_ready) {
+        if (IsKeyPressed(KEY_SPACE)) {
+            printf("\nfire laser\n");
+            player.is_shot_ready = false;
+            player.laser_start_time = GetTime();
+        }
+    }
+    else if (player.laser_start_time + player.laser_cooldown <= GetTime()) {
+        player.is_shot_ready = true;
+        player.laser_start_time = GetTime();
+    }
     player.spr.dest_rec.x += player.direction.x * player.speed * dt;
     player.spr.dest_rec.y += player.direction.y * player.speed * dt;
+
+    return;
+}
+
+void _meteor_cooldown_timer(double cooldown) {
+    if (meteor_start_time + cooldown <= GetTime()) {
+        printf("\nCreate Meteor\n");
+        meteor_start_time = GetTime();
+    }
 
     return;
 }
