@@ -4,6 +4,7 @@
 
 #include <raylib.h>
 #include <raymath.h>
+#include <stdio.h>
 
 #include "defines.h"
 
@@ -12,12 +13,12 @@
 #define LASER_COOLDOWN .2f
 
 #define MAX_LASERS 30
-#define LASER_SPEED 1500
+#define LASER_SPEED 1400
 
 #define MAX_METEORS 10
-#define METEOR_COOLDOWN 0.4f
-#define METEOR_MAX_SPEED 700
-#define METEOR_MIN_SPEED 500
+#define METEOR_COOLDOWN 0.3f
+#define METEOR_MAX_SPEED 500
+#define METEOR_MIN_SPEED 300
 
 typedef struct Sprite {
     Texture2D* texture;
@@ -47,6 +48,9 @@ typedef struct Laser {
     Sprite spr;
     float speed;
 } Laser;
+
+
+static bool is_game_running = true;
 
 static Player player = {0};
 
@@ -82,11 +86,15 @@ void _instance_laser(Vector2 position);
 void _draw_all_lasers(void);
 void _update_all_laser(float dt);
 
+void _all_collisions(void);
+void _game_over(void);
+
 
 void game_init(void) {
     InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, GAME_NAME);
     InitAudioDevice();
     SetTargetFPS(60);
+    is_game_running = true;
 
     _init_player(&player, LASER_COOLDOWN);
 
@@ -104,10 +112,11 @@ void game_init(void) {
     return;
 }
 void game_loop(void) {
-    while (!WindowShouldClose()) {
+    while (is_game_running) {
         _update_game(GetFrameTime());
         _draw_game();
     }
+    _game_over();
 
     return;
 }
@@ -135,12 +144,13 @@ void _update_game(float dt) {
     _meteor_cooldown_timer(METEOR_COOLDOWN);
     _update_all_laser(dt);
     _update_all_meteors(dt);
+    _all_collisions();
 
     return;
 }
 void _draw_game(void) {
     BeginDrawing();
-    ClearBackground(DARKGRAY);
+    ClearBackground((Color) { 58, 46, 63, 255 });
 
     _draw_stars();
     _draw_all_lasers();
@@ -323,6 +333,43 @@ void _update_all_meteors(float dt) {
             meteor_list[i].spr.dest_rec.y += meteor_list[i].direction.y * meteor_list[i].speed * dt;
             if (meteor_list[i].spr.dest_rec.y >= WINDOW_HEIGHT+meteor_sprite.dest_rec.height/2.f) { meteor_list[i].is_in_use = false; }
         }
+    }
+
+    return;
+}
+
+void _all_collisions(void) {
+    for (int i=0; i<MAX_METEORS; i++) {
+        if (meteor_list[i].is_in_use) {
+            if (CheckCollisionRecs(meteor_list[i].spr.dest_rec, player.spr.dest_rec)) {
+                is_game_running = false;
+            }
+            for (int j = 0; j<MAX_LASERS; j++) {
+                if (
+                    laser_list[j].is_in_use &&
+                    CheckCollisionRecs(meteor_list[i].spr.dest_rec, laser_list[j].spr.dest_rec)
+                ) {
+                    laser_list[j].is_in_use = false;
+                    meteor_list[i].is_in_use = false;
+                }
+            }
+        }
+    }
+
+    return;
+}
+
+void _game_over(void) {
+    while (!WindowShouldClose()) {
+        BeginDrawing();
+        ClearBackground(DARKGRAY);
+
+        _draw_stars();
+        _draw_all_meteors();
+
+        DrawText("Game Over!!", 20, 20, 60, WHITE);
+
+        EndDrawing();
     }
 
     return;
