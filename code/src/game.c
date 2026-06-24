@@ -15,7 +15,9 @@
 #define LASER_SPEED 1500
 
 #define MAX_METEORS 10
-#define METEOR_SPEED 600
+#define METEOR_COOLDOWN 0.4f
+#define METEOR_MAX_SPEED 700
+#define METEOR_MIN_SPEED 500
 
 typedef struct Sprite {
     Texture2D* texture;
@@ -130,7 +132,7 @@ void game_close(void) {
 
 void _update_game(float dt) {
     _update_player(dt);
-    _meteor_cooldown_timer(0.5);
+    _meteor_cooldown_timer(METEOR_COOLDOWN);
     _update_all_laser(dt);
     _update_all_meteors(dt);
 
@@ -141,7 +143,6 @@ void _draw_game(void) {
     ClearBackground(DARKGRAY);
 
     _draw_stars();
-    // _draw_sprite(&meteor_sprite);
     _draw_all_lasers();
     _draw_all_meteors();
     _draw_sprite(&player.spr);
@@ -238,7 +239,7 @@ void _meteor_cooldown_timer(double cooldown) {
         float half_meteor_width = meteor_sprite.texture->width/2.f;
         Vector2 meteor_rand_coords = {
             .x = GetRandomValue(half_meteor_width, WINDOW_WIDTH-half_meteor_width),
-            .y = GetRandomValue(-100, -200)
+            .y = GetRandomValue(-half_meteor_width*2, -half_meteor_width*4)
         };
         _instance_meteor(meteor_rand_coords);
         meteor_start_time = GetTime();
@@ -297,8 +298,8 @@ void _instance_meteor(Vector2 position) {
             };
             meteor_list[i].spr.dest_rec.x = position.x;
             meteor_list[i].spr.dest_rec.y = position.y;
-            meteor_list[i].speed = METEOR_SPEED;
-            // meteor_list[i].direction = direction;
+            meteor_list[i].speed = GetRandomValue(METEOR_MAX_SPEED, METEOR_MIN_SPEED);
+            meteor_list[i].direction = Vector2Normalize((Vector2) { .x=(GetRandomValue(-5, 5)/10.f), .y=1 });
 
             meteor_list[i].is_in_use = true;
         } else { is_not_empty_slot = true; }
@@ -318,7 +319,8 @@ void _draw_all_meteors(void) {
 void _update_all_meteors(float dt) {
     for (int i=0; i<MAX_METEORS; i++) {
         if (meteor_list[i].is_in_use) {
-            meteor_list[i].spr.dest_rec.y += meteor_list[i].speed * dt;
+            meteor_list[i].spr.dest_rec.x += meteor_list[i].direction.x * meteor_list[i].speed * dt;
+            meteor_list[i].spr.dest_rec.y += meteor_list[i].direction.y * meteor_list[i].speed * dt;
             if (meteor_list[i].spr.dest_rec.y >= WINDOW_HEIGHT+meteor_sprite.dest_rec.height/2.f) { meteor_list[i].is_in_use = false; }
         }
     }
