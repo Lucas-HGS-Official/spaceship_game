@@ -87,7 +87,7 @@ void _draw_all_lasers(void);
 void _update_all_laser(float dt);
 
 void _all_collisions(void);
-void _game_over(void);
+void _draw_game_over_screen(void);
 
 
 void game_init(void) {
@@ -114,11 +114,10 @@ void game_init(void) {
     return;
 }
 void game_loop(void) {
-    while (is_game_running) {
+    while (!WindowShouldClose()) {
         _update_game(GetFrameTime());
         _draw_game();
     }
-    _game_over();
 
     return;
 }
@@ -142,22 +141,28 @@ void game_close(void) {
 
 
 void _update_game(float dt) {
-    _update_player(dt);
-    _meteor_cooldown_timer(METEOR_COOLDOWN);
-    _update_all_laser(dt);
-    _update_all_meteors(dt);
-    _all_collisions();
+    if (is_game_running) {
+        _update_player(dt);
+        _meteor_cooldown_timer(METEOR_COOLDOWN);
+        _update_all_laser(dt);
+        _update_all_meteors(dt);
+        _all_collisions();
+    }
 
     return;
 }
 void _draw_game(void) {
     BeginDrawing();
-    ClearBackground((Color) { 58, 46, 63, 255 });
+    if (is_game_running) {
+        ClearBackground((Color) { 58, 46, 63, 255 });
 
-    _draw_stars();
-    _draw_all_lasers();
-    _draw_all_meteors();
-    _draw_sprite(&player.spr);
+        _draw_stars();
+        _draw_all_lasers();
+        _draw_all_meteors();
+        _draw_sprite(&player.spr);
+    } else if (!is_game_running) {
+        _draw_game_over_screen();
+    }
 
     EndDrawing();
 
@@ -361,19 +366,14 @@ void _all_collisions(void) {
     return;
 }
 
-void _game_over(void) {
-    while (!WindowShouldClose()) {
-        BeginDrawing();
-        ClearBackground(DARKGRAY);
+void _draw_game_over_screen(void) {
+    ClearBackground(DARKGRAY);
 
-        _draw_stars();
-        _draw_all_lasers();
-        _draw_all_meteors();
+    _draw_stars();
+    _draw_all_lasers();
+    _draw_all_meteors();
 
-        DrawTextPro(custom_font, "Game Over!!", (Vector2) { 20, 20 }, (Vector2) { 0, 0 }, 0.f, 60, 0, WHITE);
-
-        EndDrawing();
-    }
+    DrawTextPro(custom_font, "Game Over!!", (Vector2) { 20, 20 }, (Vector2) { 0, 0 }, 0.f, 60, 0, WHITE);
 
     return;
 }
