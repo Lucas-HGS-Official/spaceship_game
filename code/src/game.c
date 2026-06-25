@@ -51,6 +51,7 @@ typedef struct Laser {
 
 static bool is_game_running = true;
 static Font custom_font = {};
+static int current_score = 0;
 
 static Player player = {0};
 
@@ -88,6 +89,7 @@ void _update_all_laser(float dt);
 
 void _all_collisions(void);
 void _draw_game_over_screen(void);
+void _draw_score(void);
 
 
 void game_init(void) {
@@ -142,6 +144,7 @@ void game_close(void) {
 
 void _update_game(float dt) {
     if (is_game_running) {
+        current_score = GetTime();
         _update_player(dt);
         _meteor_cooldown_timer(METEOR_COOLDOWN);
         _update_all_laser(dt);
@@ -160,6 +163,8 @@ void _draw_game(void) {
         _draw_all_lasers();
         _draw_all_meteors();
         _draw_sprite(&player.spr);
+        _draw_score();
+
     } else if (!is_game_running) {
         _draw_game_over_screen();
     }
@@ -372,8 +377,37 @@ void _draw_game_over_screen(void) {
     _draw_stars();
     _draw_all_lasers();
     _draw_all_meteors();
+    _draw_score();
 
-    DrawTextPro(custom_font, "Game Over!!", (Vector2) { 20, 20 }, (Vector2) { 0, 0 }, 0.f, 60, 0, WHITE);
+
+    float font_padding = 20.f;
+
+    const char* game_over_text = "Game Over!!";
+    float font_size = 60.f;
+    Vector2 score_size = MeasureTextEx(custom_font, game_over_text, font_size, 0.f);
+    Vector2 font_position = {
+        .x = WINDOW_WIDTH - score_size.x - font_padding,
+        .y = font_padding,
+    };
+
+    DrawTextPro(custom_font, game_over_text, font_position, (Vector2) { 0, 0 }, 0.f, font_size, 0.f, WHITE);
+
+    return;
+}
+
+void _draw_score(void) {
+    float font_padding = 20.f;
+
+    const char* score_text = TextFormat("Score: %i", current_score);
+    float font_size = 30.f;
+    float font_spacing = 0.f;
+    float font_rotation = 0.f;
+    Vector2 font_position = {
+        .x = font_padding,
+        .y = font_padding,
+    };
+
+    DrawTextPro(custom_font, score_text, font_position, (Vector2) { 0, 0 }, font_rotation, font_size, font_spacing, RED);
 
     return;
 }
