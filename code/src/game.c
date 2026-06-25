@@ -4,7 +4,6 @@
 
 #include <raylib.h>
 #include <raymath.h>
-#include <stdio.h>
 
 #include "defines.h"
 
@@ -51,6 +50,7 @@ typedef struct Laser {
 
 
 static bool is_game_running = true;
+static Font custom_font = {};
 
 static Player player = {0};
 
@@ -95,6 +95,8 @@ void game_init(void) {
     InitAudioDevice();
     SetTargetFPS(60);
     is_game_running = true;
+    custom_font = LoadFont("resources/images/Oxanium-Bold.ttf");
+    SetTextureFilter(custom_font.texture, TEXTURE_FILTER_BILINEAR);
 
     _init_player(&player, LASER_COOLDOWN);
 
@@ -365,9 +367,10 @@ void _game_over(void) {
         ClearBackground(DARKGRAY);
 
         _draw_stars();
+        _draw_all_lasers();
         _draw_all_meteors();
 
-        DrawText("Game Over!!", 20, 20, 60, WHITE);
+        DrawTextPro(custom_font, "Game Over!!", (Vector2) { 20, 20 }, (Vector2) { 0, 0 }, 0.f, 60, 0, WHITE);
 
         EndDrawing();
     }
