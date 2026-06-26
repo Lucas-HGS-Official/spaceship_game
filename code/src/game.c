@@ -24,6 +24,7 @@ typedef struct Sprite {
     Rectangle src_rec;
     Rectangle dest_rec;
     Vector2 origin;
+    float rotation;
 } Sprite;
 
 typedef struct Player {
@@ -41,6 +42,7 @@ typedef struct Meteor {
     Sprite spr;
     Vector2 direction;
     float speed;
+    float rotation_speed;
 } Meteor;
 
 typedef struct Laser {
@@ -205,11 +207,12 @@ void _init_sprite(Sprite* sprite, char* texture_file_path) {
         .x = WINDOW_WIDTH/2.f, .y = WINDOW_HEIGHT/2.f,
     };
     sprite->origin = (Vector2) { .x = sprite->src_rec.width/2.f, .y = sprite->src_rec.height/2.f };
+    sprite->rotation = 0.f;
 
     return;
 }
 void _draw_sprite(Sprite* sprite) {
-    DrawTexturePro(*(sprite->texture), sprite->src_rec, sprite->dest_rec, sprite->origin, 0.f, WHITE);
+    DrawTexturePro(*(sprite->texture), sprite->src_rec, sprite->dest_rec, sprite->origin, sprite->rotation, WHITE);
 
     return;
 }
@@ -328,6 +331,7 @@ void _instance_meteor(Vector2 position) {
             meteor_list[i].spr.dest_rec.y = position.y;
             meteor_list[i].speed = GetRandomValue(METEOR_MAX_SPEED, METEOR_MIN_SPEED);
             meteor_list[i].direction = Vector2Normalize((Vector2) { .x=(GetRandomValue(-5, 5)/10.f), .y=1 });
+            meteor_list[i].rotation_speed = (GetRandomValue(0, 100)) * (GetRandomValue(0, 1) == 0? -1:1);
 
             meteor_list[i].is_in_use = true;
         } else { is_not_empty_slot = true; }
@@ -349,6 +353,7 @@ void _update_all_meteors(float dt) {
         if (meteor_list[i].is_in_use) {
             meteor_list[i].spr.dest_rec.x += meteor_list[i].direction.x * meteor_list[i].speed * dt;
             meteor_list[i].spr.dest_rec.y += meteor_list[i].direction.y * meteor_list[i].speed * dt;
+            meteor_list[i].spr.rotation += meteor_list[i].rotation_speed * dt;
             if (meteor_list[i].spr.dest_rec.y >= WINDOW_HEIGHT+meteor_sprite.dest_rec.height/2.f) { meteor_list[i].is_in_use = false; }
         }
     }
