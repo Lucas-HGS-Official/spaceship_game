@@ -33,6 +33,7 @@ typedef struct Player {
     double laser_start_time;
     double laser_cooldown;
     bool is_shot_ready;
+    Texture2D alpha_mask;
 } Player;
 
 typedef struct Meteor {
@@ -221,6 +222,11 @@ void _init_player(Player* player, double laser_cooldown) {
     player->laser_start_time = GetTime();
     player->laser_cooldown = laser_cooldown;
     player->is_shot_ready = true;
+
+    Image player_image = LoadImageFromTexture(*(player->spr.texture));
+    Image player_alpha_image = ImageFromChannel(player_image, 3);
+    player->alpha_mask = LoadTextureFromImage(player_alpha_image);
+
 
     return;
 }
