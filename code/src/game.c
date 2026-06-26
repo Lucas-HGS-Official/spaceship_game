@@ -65,13 +65,16 @@ typedef struct Explosion {
 
 
 static bool is_game_running = true;
-static Font custom_font = {};
+static Font custom_font = {0};
 static int current_score = 0;
+static Sound game_music = {0};
 
 static Player player = {0};
+static Sound damage_sound = {0};
 
 static Sprite *explosion_spr_list = NULL;
-static Explosion explosions_list[MAX_EXPLOSIONS] = {};
+static Explosion explosions_list[MAX_EXPLOSIONS] = {0};
+static Sound explosion_sound = {0};
 
 static Sprite meteor_sprite = {0};
 static Meteor meteor_list[MAX_METEORS] = {0};
@@ -79,6 +82,7 @@ static double meteor_start_time = 0;
 
 static Sprite laser_sprite = {0};
 static Laser laser_list[MAX_LASERS] = {0};
+static Sound laser_sound = {0};
 
 static Texture2D star_texture = {0};
 static Vector2 star_coords_array[STARS_NUM] = {0};
@@ -119,27 +123,38 @@ void game_init(void) {
     InitAudioDevice();
     SetTargetFPS(60);
     is_game_running = true;
+
     custom_font = LoadFont("resources/images/Oxanium-Bold.ttf");
     SetTextureFilter(custom_font.texture, TEXTURE_FILTER_BILINEAR);
 
+    game_music = LoadSound("resources/audio/game_music.wav");
+
     _init_player(&player, LASER_COOLDOWN);
+    damage_sound = LoadSound("resources/audio/damage.ogg");
 
     explosion_spr_list = (Sprite*) MemAlloc(sizeof(Sprite) * EXPLOSION_FRAMES_NUM);
     for (int i=0; i<EXPLOSION_FRAMES_NUM; i++) {
         char* filepath = (char*) TextFormat("resources/images/explosion/%i.png", i);
         _init_sprite(&explosion_spr_list[i], filepath);
     }
+    explosion_sound = LoadSound("resources/audio/explosion.wav");
+    SetSoundVolume(explosion_sound, 0.4f);
 
     _init_sprite(&meteor_sprite, "resources/images/meteor.png");
     meteor_start_time = GetTime();
 
     _init_sprite(&laser_sprite, "resources/images/laser.png");
+    laser_sound = LoadSound("resources/audio/laser.wav");
+    SetSoundVolume(laser_sound, 0.8f);
 
     star_texture = LoadTexture("resources/images/star.png");
 
     for (int i=0; i<STARS_NUM; i++) {
         star_coords_array[i] = _gen_rand_coords();
     }
+
+    PlaySound(game_music);
+    SetSoundVolume(game_music, .8f);
 
     return;
 }
@@ -152,9 +167,6 @@ void game_loop(void) {
     return;
 }
 void game_close(void) {
-    CloseAudioDevice();
-    CloseWindow();
-
     UnloadTexture(*(player.spr.texture));
     MemFree(player.spr.texture);
 
@@ -172,6 +184,14 @@ void game_close(void) {
     }
     MemFree(explosion_spr_list);
 
+    UnloadSound(laser_sound);
+    UnloadSound(explosion_sound);
+    UnloadSound(damage_sound);
+    UnloadSound(game_music);
+
+    CloseAudioDevice();
+    CloseWindow();
+
     return;
 }
 
@@ -180,9 +200,13 @@ void _update_game(float dt) {
     if (is_game_running) {
         current_score = GetTime();
         _update_player(dt);
+        if (!IsSoundPlaying(game_music)) {
+            PlaySound(game_music);
+        }
     }
     else if (!is_game_running) {
         dt /= 10.f;
+        StopSound(game_music);
     }
     _meteor_cooldown_timer(METEOR_COOLDOWN*2);
     _update_all_laser(dt);
@@ -323,12 +347,14 @@ void _instance_laser(Vector2 position) {
             is_not_empty_slot = false;
             laser_list[i] = (Laser) {
                 .spr = laser_sprite,
+                .speed = LASER_SPEED,
+                .is_in_use = true,
             };
+
             laser_list[i].spr.dest_rec.x = position.x;
             laser_list[i].spr.dest_rec.y = position.y;
-            laser_list[i].speed = LASER_SPEED;
 
-            laser_list[i].is_in_use = true;
+            PlaySound(laser_sound);
         } else { is_not_empty_slot = true; }
     }
 
@@ -403,13 +429,19 @@ void _all_collisions(void) {
     for (int i=0; i<MAX_METEORS; i++) {
         if (meteor_list[i].is_in_use) {
             if (CheckCollisionRecs(meteor_list[i].spr.dest_rec, player.spr.dest_rec)) {
-                is_game_running = false;
-                for (int j = 0; j<EXPLOSION_FRAMES_NUM; j++) {
-                    player.speed = 0.f;
-                    explosion_spr_list[j].dest_rec.x = player.spr.dest_rec.x;
-                    explosion_spr_list[j].dest_rec.y = player.spr.dest_rec.y;
+                if (is_game_running) {
+                    // SetSoundPitch(damage_sound, 3.f);
+                    // PlaySound(damage_sound);
+                    for (int j = 0; j<EXPLOSION_FRAMES_NUM; j++) {
+                        player.speed = 0.f;
+                        explosion_spr_list[j].dest_rec.x = player.spr.dest_rec.x;
+                        explosion_spr_list[j].dest_rec.y = player.spr.dest_rec.y;
+                    }
+                    SetSoundVolume(explosion_sound, 1.f);
                     _instance_explosion((Vector2) { player.spr.dest_rec.x, player.spr.dest_rec.y }, WHITE);
+                    // StopSound(explosion_sound);
                 }
+                is_game_running = false;
             }
             for (int j = 0; j<MAX_LASERS; j++) {
                 if (
@@ -516,6 +548,8 @@ void _instance_explosion(Vector2 position, Color tint) {
                 explosions_list[i].spr_list[j].dest_rec.y = position.y;
                 explosions_list[i].tint = tint;
             };
+
+            PlaySound(explosion_sound);
         } else { is_not_empty_slot = true; }
     }
 
