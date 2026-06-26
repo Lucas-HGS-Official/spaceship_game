@@ -4,20 +4,24 @@
 
 #include <raylib.h>
 #include <raymath.h>
+#include <stdio.h>
 
 #include "defines.h"
 
-#define STARS_NUM 20
+static const int STARS_NUM = 20;
 
-#define LASER_COOLDOWN .2f
+static const int EXPLOSION_FRAMES_NUM = 21;
+static const int MAX_EXPLOSIONS = 30;
 
-#define MAX_LASERS 30
-#define LASER_SPEED 1400
+static const float LASER_COOLDOWN = .2f;
 
-#define MAX_METEORS 10
-#define METEOR_COOLDOWN 0.3f
-#define METEOR_MAX_SPEED 500
-#define METEOR_MIN_SPEED 300
+static const int MAX_LASERS = 30;
+static const int LASER_SPEED = 1400;
+
+static const int MAX_METEORS = 10;
+static const float METEOR_COOLDOWN = 0.3f;
+static const int METEOR_MAX_SPEED = 500;
+static const int METEOR_MIN_SPEED = 300;
 
 typedef struct Sprite {
     Texture2D* texture;
@@ -25,6 +29,7 @@ typedef struct Sprite {
     Rectangle dest_rec;
     Vector2 origin;
     float rotation;
+    Color tint;
 } Sprite;
 
 typedef struct Player {
@@ -51,12 +56,22 @@ typedef struct Laser {
     float speed;
 } Laser;
 
+typedef struct Explosion {
+    Sprite *spr_list;
+    bool is_in_use;
+    int current_frame;
+    Color tint;
+} Explosion;
+
 
 static bool is_game_running = true;
 static Font custom_font = {};
 static int current_score = 0;
 
 static Player player = {0};
+
+static Sprite *explosion_spr_list = NULL;
+static Explosion explosions_list[MAX_EXPLOSIONS] = {};
 
 static Sprite meteor_sprite = {0};
 static Meteor meteor_list[MAX_METEORS] = {0};
@@ -76,7 +91,7 @@ Vector2 _gen_rand_coords(void);
 void _draw_stars(void);
 
 void _init_sprite(Sprite* sprite, char* texture_file_path);
-void _draw_sprite(Sprite* sprite);
+void _draw_sprite(Sprite* sprite, Color sprite_tint);
 
 void _init_player(Player* player, double laser_cooldown);
 void _update_player(float dt);
@@ -94,6 +109,10 @@ void _all_collisions(void);
 void _draw_game_over_screen(void);
 void _draw_score(void);
 
+void _instance_explosion(Vector2 position, Color tint);
+void _draw_explosion_frame(int *frame, Color tint);
+void _draw_all_explosions(void);
+
 
 void game_init(void) {
     InitWindow(WINDOW_WIDTH, WINDOW_HEIGHT, GAME_NAME);
@@ -104,6 +123,12 @@ void game_init(void) {
     SetTextureFilter(custom_font.texture, TEXTURE_FILTER_BILINEAR);
 
     _init_player(&player, LASER_COOLDOWN);
+
+    explosion_spr_list = (Sprite*) MemAlloc(sizeof(Sprite) * EXPLOSION_FRAMES_NUM);
+    for (int i=0; i<EXPLOSION_FRAMES_NUM; i++) {
+        char* filepath = (char*) TextFormat("resources/images/explosion/%i.png", i);
+        _init_sprite(&explosion_spr_list[i], filepath);
+    }
 
     _init_sprite(&meteor_sprite, "resources/images/meteor.png");
     meteor_start_time = GetTime();
@@ -141,6 +166,12 @@ void game_close(void) {
     UnloadTexture(*(laser_sprite.texture));
     MemFree(laser_sprite.texture);
 
+    for (int i=0; i<EXPLOSION_FRAMES_NUM; i++) {
+        UnloadTexture(*(explosion_spr_list[i].texture));
+        MemFree(explosion_spr_list[i].texture);
+    }
+    MemFree(explosion_spr_list);
+
     return;
 }
 
@@ -149,11 +180,14 @@ void _update_game(float dt) {
     if (is_game_running) {
         current_score = GetTime();
         _update_player(dt);
-        _meteor_cooldown_timer(METEOR_COOLDOWN);
-        _update_all_laser(dt);
-        _update_all_meteors(dt);
-        _all_collisions();
     }
+    else if (!is_game_running) {
+        dt /= 10.f;
+    }
+    _meteor_cooldown_timer(METEOR_COOLDOWN*2);
+    _update_all_laser(dt);
+    _update_all_meteors(dt);
+    _all_collisions();
 
     return;
 }
@@ -165,8 +199,9 @@ void _draw_game(void) {
         _draw_stars();
         _draw_all_lasers();
         _draw_all_meteors();
-        _draw_sprite(&player.spr);
+        _draw_sprite(&player.spr, player.spr.tint);
         _draw_score();
+        _draw_all_explosions();
 
     } else if (!is_game_running) {
         _draw_game_over_screen();
@@ -208,11 +243,12 @@ void _init_sprite(Sprite* sprite, char* texture_file_path) {
     };
     sprite->origin = (Vector2) { .x = sprite->src_rec.width/2.f, .y = sprite->src_rec.height/2.f };
     sprite->rotation = 0.f;
+    sprite->tint = WHITE;
 
     return;
 }
-void _draw_sprite(Sprite* sprite) {
-    DrawTexturePro(*(sprite->texture), sprite->src_rec, sprite->dest_rec, sprite->origin, sprite->rotation, WHITE);
+void _draw_sprite(Sprite* sprite, Color sprite_tint) {
+    DrawTexturePro(*(sprite->texture), sprite->src_rec, sprite->dest_rec, sprite->origin, sprite->rotation, sprite_tint);
 
     return;
 }
@@ -301,7 +337,8 @@ void _instance_laser(Vector2 position) {
 void _draw_all_lasers(void) {
     for (int i=0; i<MAX_LASERS; i++) {
         if (laser_list[i].is_in_use) {
-            _draw_sprite(&laser_list[i].spr);
+            Color tint = is_game_running? laser_list[i].spr.tint : DARKGRAY;
+            _draw_sprite(&laser_list[i].spr, tint);
         }
     }
 
@@ -342,7 +379,8 @@ void _instance_meteor(Vector2 position) {
 void _draw_all_meteors(void) {
     for (int i=0; i<MAX_METEORS; i++) {
         if (meteor_list[i].is_in_use) {
-            _draw_sprite(&meteor_list[i].spr);
+            Color tint = is_game_running? meteor_list[i].spr.tint : DARKGRAY;
+            _draw_sprite(&meteor_list[i].spr, tint);
         }
     }
 
@@ -366,12 +404,19 @@ void _all_collisions(void) {
         if (meteor_list[i].is_in_use) {
             if (CheckCollisionRecs(meteor_list[i].spr.dest_rec, player.spr.dest_rec)) {
                 is_game_running = false;
+                for (int j = 0; j<EXPLOSION_FRAMES_NUM; j++) {
+                    player.speed = 0.f;
+                    explosion_spr_list[j].dest_rec.x = player.spr.dest_rec.x;
+                    explosion_spr_list[j].dest_rec.y = player.spr.dest_rec.y;
+                    _instance_explosion((Vector2) { player.spr.dest_rec.x, player.spr.dest_rec.y }, WHITE);
+                }
             }
             for (int j = 0; j<MAX_LASERS; j++) {
                 if (
                     laser_list[j].is_in_use &&
                     CheckCollisionRecs(meteor_list[i].spr.dest_rec, laser_list[j].spr.dest_rec)
                 ) {
+                    _instance_explosion((Vector2) { meteor_list[i].spr.dest_rec.x, meteor_list[i].spr.dest_rec.y }, RED);
                     laser_list[j].is_in_use = false;
                     meteor_list[i].is_in_use = false;
                 }
@@ -389,10 +434,9 @@ void _draw_game_over_screen(void) {
     _draw_all_lasers();
     _draw_all_meteors();
     _draw_score();
-
+    _draw_all_explosions();
 
     float font_padding = 20.f;
-
     const char* game_over_text = "Game Over!!";
     float font_size = 60.f;
     Vector2 game_over_size = MeasureTextEx(custom_font, game_over_text, font_size, 0.f);
@@ -400,7 +444,6 @@ void _draw_game_over_screen(void) {
         .x = WINDOW_WIDTH - game_over_size.x - font_padding,
         .y = font_padding,
     };
-
     DrawTextPro(custom_font, game_over_text, font_position, (Vector2) { 0, 0 }, 0.f, font_size, 0.f, WHITE);
 
     return;
@@ -427,6 +470,54 @@ void _draw_score(void) {
     DrawRectangleRoundedLines(rounded_rec, .5, 0, WHITE);
 
     DrawTextPro(custom_font, score_text, font_position, (Vector2) { 0, 0 }, font_rotation, font_size, font_spacing, WHITE);
+
+    return;
+}
+
+void _draw_explosion_frame(int *frame, Color tint) {
+    if (*frame<EXPLOSION_FRAMES_NUM) {
+        _draw_sprite(&(explosion_spr_list[*frame]), tint);
+    }
+    else {
+        return;
+    }
+    (*frame)++;
+
+    return;
+}
+
+void _draw_all_explosions(void) {
+    int i=0;
+    for (i=0; i<MAX_EXPLOSIONS; i++) {
+        if (explosions_list[i].is_in_use && explosions_list[i].current_frame < EXPLOSION_FRAMES_NUM) {
+            _draw_explosion_frame(&(explosions_list[i].current_frame), explosions_list[i].tint);
+        } else {
+            explosions_list[i].current_frame = 0;
+            explosions_list[i].is_in_use = false;
+        }
+    }
+
+    return;
+}
+
+void _instance_explosion(Vector2 position, Color tint) {
+    bool is_not_empty_slot = true;
+    int i=0;
+    for (i=0; i<MAX_EXPLOSIONS && is_not_empty_slot; i++) {
+        if (!explosions_list[i].is_in_use) {
+            is_not_empty_slot = false;
+            explosions_list[i] = (Explosion) {
+                .spr_list = explosion_spr_list,
+                .current_frame = 0,
+                .is_in_use = true,
+            };
+            for (int j=0; j<EXPLOSION_FRAMES_NUM; j++) {
+                explosions_list[i].spr_list[j].dest_rec.x = position.x;
+                explosions_list[i].spr_list[j].dest_rec.y = position.y;
+                explosions_list[i].tint = tint;
+            };
+        } else { is_not_empty_slot = true; }
+    }
 
     return;
 }
