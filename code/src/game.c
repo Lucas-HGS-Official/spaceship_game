@@ -384,9 +384,9 @@ void _draw_game_over_screen(void) {
 
     const char* game_over_text = "Game Over!!";
     float font_size = 60.f;
-    Vector2 score_size = MeasureTextEx(custom_font, game_over_text, font_size, 0.f);
+    Vector2 game_over_size = MeasureTextEx(custom_font, game_over_text, font_size, 0.f);
     Vector2 font_position = {
-        .x = WINDOW_WIDTH - score_size.x - font_padding,
+        .x = WINDOW_WIDTH - game_over_size.x - font_padding,
         .y = font_padding,
     };
 
@@ -406,8 +406,16 @@ void _draw_score(void) {
         .x = font_padding,
         .y = font_padding,
     };
+    Vector2 score_size = MeasureTextEx(custom_font, score_text, font_size, 0.f);
+    Rectangle rounded_rec = {
+        .width = score_size.x + 10,
+        .height = score_size.y + 10,
+        .x = font_position.x - 5,
+        .y = font_position.y - 5,
+    };
+    DrawRectangleRoundedLines(rounded_rec, .5, 0, WHITE);
 
-    DrawTextPro(custom_font, score_text, font_position, (Vector2) { 0, 0 }, font_rotation, font_size, font_spacing, RED);
+    DrawTextPro(custom_font, score_text, font_position, (Vector2) { 0, 0 }, font_rotation, font_size, font_spacing, WHITE);
 
     return;
 }
