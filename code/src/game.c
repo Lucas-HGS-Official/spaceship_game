@@ -138,14 +138,14 @@ void game_init(void) {
         _init_sprite(&explosion_spr_list[i], filepath);
     }
     explosion_sound = LoadSound("resources/audio/explosion.wav");
-    SetSoundVolume(explosion_sound, 0.4f);
+    SetSoundVolume(explosion_sound, 0.3f);
 
     _init_sprite(&meteor_sprite, "resources/images/meteor.png");
     meteor_start_time = GetTime();
 
     _init_sprite(&laser_sprite, "resources/images/laser.png");
     laser_sound = LoadSound("resources/audio/laser.wav");
-    SetSoundVolume(laser_sound, 0.8f);
+    SetSoundVolume(laser_sound, 0.7f);
 
     star_texture = LoadTexture("resources/images/star.png");
 
@@ -154,7 +154,7 @@ void game_init(void) {
     }
 
     PlaySound(game_music);
-    SetSoundVolume(game_music, .8f);
+    SetSoundVolume(game_music, .6f);
 
     return;
 }
