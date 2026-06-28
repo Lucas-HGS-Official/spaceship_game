@@ -55,7 +55,7 @@ update_emcc:
 # 	echo 'source "/home/lhgs/emsdk/emsdk_env.sh"' >> $HOME/.bash_profile
 
 web_build: clean_all
-	emcc -o $(WEB_TARGET) $(SRC) -Os -Wall ./$(WEB_LIBS)libraylib.a -Icode/include -Icode/deps/include -I/home/lhgs/raylib/src -L$(WEB_LIBS) -s USE_GLFW=3 -s MAX_WEBGL_VERSION=2 -s ASYNCIFY -s MODULARIZE=1 --preload-file resources/audio --preload-file resources/images --shell-file resources/shell_minimal.html -DPLATFORM_WEB
+	emcc -o $(WEB_TARGET) $(SRC) -Os -Wall ./$(WEB_LIBS)libraylib.a -Icode/include -Icode/deps/include -I/home/lhgs/raylib/src -L$(WEB_LIBS) -s USE_GLFW=3 -s MAX_WEBGL_VERSION=2 -s ASYNCIFY -s MODULARIZE=1 -s TOTAL_MEMORY=67108864 -s ASSERTIONS=1 --preload-file resources/audio --preload-file resources/images --shell-file resources/shell_minimal.html -DPLATFORM_WEB
 # -s EXPORT_NAME="game" -s TOTAL_MEMORY=67108864 -s ASSERTIONS=1 --profiling --shell-file path-to/shell.html
 ###################################
 

@@ -8,20 +8,20 @@
 
 #include "defines.h"
 
-static const int STARS_NUM = 20;
+#define STARS_NUM 20
 
-static const int EXPLOSION_FRAMES_NUM = 21;
-static const int MAX_EXPLOSIONS = 30;
+#define EXPLOSION_FRAMES_NUM 21
+#define MAX_EXPLOSIONS 30
 
-static const float LASER_COOLDOWN = .2f;
+#define LASER_COOLDOWN .2f
 
-static const int MAX_LASERS = 30;
-static const int LASER_SPEED = 1400;
+#define MAX_LASERS 30
+#define LASER_SPEED 1400
 
-static const int MAX_METEORS = 10;
-static const float METEOR_COOLDOWN = 0.3f;
-static const int METEOR_MAX_SPEED = 500;
-static const int METEOR_MIN_SPEED = 300;
+#define MAX_METEORS 10
+#define METEOR_COOLDOWN 0.3f
+#define METEOR_MAX_SPEED 500
+#define METEOR_MIN_SPEED 300
 
 typedef struct Sprite {
     Texture2D* texture;
@@ -138,14 +138,14 @@ void game_init(void) {
         _init_sprite(&explosion_spr_list[i], filepath);
     }
     explosion_sound = LoadSound("resources/audio/explosion.wav");
-    SetSoundVolume(explosion_sound, 0.3f);
+    SetSoundVolume(explosion_sound, 0.2f);
 
     _init_sprite(&meteor_sprite, "resources/images/meteor.png");
     meteor_start_time = GetTime();
 
     _init_sprite(&laser_sprite, "resources/images/laser.png");
     laser_sound = LoadSound("resources/audio/laser.wav");
-    SetSoundVolume(laser_sound, 0.7f);
+    SetSoundVolume(laser_sound, 0.6f);
 
     star_texture = LoadTexture("resources/images/star.png");
 
@@ -154,7 +154,7 @@ void game_init(void) {
     }
 
     PlaySound(game_music);
-    SetSoundVolume(game_music, .6f);
+    SetSoundVolume(game_music, .5f);
 
     return;
 }
@@ -437,7 +437,7 @@ void _all_collisions(void) {
                         explosion_spr_list[j].dest_rec.x = player.spr.dest_rec.x;
                         explosion_spr_list[j].dest_rec.y = player.spr.dest_rec.y;
                     }
-                    SetSoundVolume(explosion_sound, 1.f);
+                    SetSoundVolume(explosion_sound, 0.8f);
                     _instance_explosion((Vector2) { player.spr.dest_rec.x, player.spr.dest_rec.y }, WHITE);
                     // StopSound(explosion_sound);
                 }
